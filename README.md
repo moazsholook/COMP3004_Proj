@@ -5,5 +5,5 @@ Members:
 Moaz Sholook,
 Mohammed Hassan,
 Fawwaz Ahmed,
-Rayan Ourdjini,
+Rayan Ourdjini and
 Sam Marei
