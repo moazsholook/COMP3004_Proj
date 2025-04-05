@@ -1,4 +1,9 @@
+**ALWAYS PULL BEFORE DEVELOPING** 
 git pull - update your local repo
-git add . - add all the files to your local repository
+
+
+after developing:
+
+git add . - add all the files you created to your local repository ** This is not necessary if you have not created any new files
 git commit -m "" - commit your changes with a message describing what you did
 git push - push your changes to the repo
