@@ -2,8 +2,8 @@
 git pull - update your local repo
 
 
-after developing:
+after developing:\
 
-git add . - add all the files you created to your local repository ** This is not necessary if you have not created any new files
+git add . - add all the files you created to your local repository
 git commit -m "" - commit your changes with a message describing what you did
 git push - push your changes to the repo
