@@ -1,0 +1,4 @@
+git pull - update your local repo
+git add . - add all the files to your local repository
+git commit -m "" - commit your changes with a message describing what you did
+git push - push your changes to the repo
