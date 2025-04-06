@@ -1,0 +1,95 @@
+@startuml
+title Insulin Pump System - Class Diagram
+
+'== Core User Interaction ==
+class User {
+    +enterPIN(pin: String): boolean
+    +addProfile(profile: Profile): void
+    +selectProfile(name: String): void
+    +requestManualBolus(bg: float, carbs: float): BolusPlan
+    +confirmBolus(plan: BolusPlan): void
+    +stopInsulinDelivery(): void
+    +powerOnPump(): void
+    +powerOffPump(): void
+    +chargeBattery(): void
+    +refillCartridge(): void
+}
+
+class InsulinPump {
+    -poweredOn: boolean
+    -locked: boolean
+    -battery: Battery
+    -cartridge: Cartridge
+    -profiles: List<Profile>
+    -activeProfile: Profile
+    -iob: float
+
+    +powerOn(): void
+    +powerOff(): void
+    +lock(): void
+    +unlock(pin: String): boolean
+    +addProfile(profile: Profile): void
+    +selectProfile(name: String): void
+    +createManualBolus(bg: float, carbs: float): BolusPlan
+    +createAutomaticBolus(): BolusPlan
+    +deliverBolus(plan: BolusPlan): void
+    +stopDelivery(): void
+    +logEvent(event: String): void
+}
+
+class Profile {
+    -name: String
+    -basalRate: float
+    -icr: float
+    -correctionFactor: float
+    -targetBG: float
+
+    +getParameters(): Map<String, float>
+}
+
+class BolusPlan {
+    -carbBolus: float
+    -correctionBolus: float
+    -totalBolus: float
+    -immediateDose: float
+    -extendedDose: float
+    -duration: int
+
+    +recalculate(bg: float, carbs: float, iob: float): void
+    +getSummary(): String
+}
+
+class Battery {
+    -level: int
+    +charge(): void
+    +isLow(): boolean
+    +isCritical(): boolean
+}
+
+class Cartridge {
+    -fillLevel: int
+    +refill(): void
+    +isFull(): boolean
+    +isEmpty(): boolean
+}
+
+class Sensor {
+    +getCurrentBG(): float
+    +getCarbInput(): float
+}
+
+class SystemLog {
+    +log(event: String): void
+}
+
+'== Relationships ==
+User --> InsulinPump : uses
+InsulinPump --> Profile : manages >
+InsulinPump --> Battery : has
+InsulinPump --> Cartridge : has
+InsulinPump --> BolusPlan : creates >
+InsulinPump --> SystemLog : logs to
+InsulinPump --> Sensor : uses
+BolusPlan --> Profile : based on
+
+@enduml
