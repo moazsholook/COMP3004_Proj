@@ -6,16 +6,807 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>320</width>
+    <height>240</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>T:SLIM X2 Insulin Pump</string>
   </property>
-  <widget class="QWidget" name="centralwidget"/>
-  <widget class="QMenuBar" name="menubar"/>
-  <widget class="QStatusBar" name="statusbar"/>
+  <property name="styleSheet">
+   <string notr="true">background-color: #222222;</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <item>
+     <!-- Status Bar - Time, Date, Battery, Insulin -->
+     <widget class="QFrame" name="statusBarFrame">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>40</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>40</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Plain</enum>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: #444444;</string>
+      </property>
+      <layout class="QHBoxLayout" name="statusBarLayout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>5</number>
+       </property>
+       <property name="topMargin">
+        <number>2</number>
+       </property>
+       <property name="rightMargin">
+        <number>5</number>
+       </property>
+       <property name="bottomMargin">
+        <number>2</number>
+       </property>
+       <!-- Battery Indicator -->
+       <item>
+        <layout class="QVBoxLayout" name="batteryLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QProgressBar" name="batteryProgressBar">
+           <property name="minimumSize">
+            <size>
+             <width>50</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>50</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QProgressBar {
+    border: 1px solid #333333;
+    border-radius: 0px;
+    background-color: #333333;
+    text-align: center;
+}
+QProgressBar::chunk {
+    background-color: #55cc55;
+}</string>
+           </property>
+           <property name="value">
+            <number>100</number>
+           </property>
+           <property name="textVisible">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="batteryLabel">
+           <property name="styleSheet">
+            <string notr="true">color: #55cc55; font-size: 10px; font-weight: bold;</string>
+           </property>
+           <property name="text">
+            <string>100%</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <widget class="QLabel" name="filterIcon">
+         <property name="minimumSize">
+          <size>
+           <width>25</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">color: white;</string>
+         </property>
+         <property name="text">
+          <string>▼</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer1">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>10</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <!-- Time and Date -->
+       <item>
+        <layout class="QVBoxLayout" name="timeLayout">
+         <item>
+          <widget class="QLabel" name="timeLabel">
+           <property name="styleSheet">
+            <string notr="true">color: white; font-size: 15px; font-weight: bold;</string>
+           </property>
+           <property name="text">
+            <string>10:20</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="dateLabel">
+           <property name="styleSheet">
+            <string notr="true">color: white; font-size: 12px;</string>
+           </property>
+           <property name="text">
+            <string>14 Nov</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="horizontalSpacer2">
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>10</width>
+           <height>20</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <widget class="QLabel" name="bolusIcon">
+         <property name="minimumSize">
+          <size>
+           <width>25</width>
+           <height>25</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">color: #66aaff; font-weight: bold; font-size: 14px;</string>
+         </property>
+         <property name="text">
+          <string>B</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <!-- Insulin Gauge -->
+       <item>
+        <layout class="QVBoxLayout" name="insulinLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QProgressBar" name="insulinProgressBar">
+           <property name="minimumSize">
+            <size>
+             <width>50</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>50</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QProgressBar {
+    border: 1px solid #333333;
+    border-radius: 0px;
+    background-color: #333333;
+    text-align: center;
+}
+QProgressBar::chunk {
+    background-color: #66aaff;
+}</string>
+           </property>
+           <property name="value">
+            <number>78</number>
+           </property>
+           <property name="textVisible">
+            <bool>false</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="insulinLabel">
+           <property name="styleSheet">
+            <string notr="true">color: #66aaff; font-size: 10px; font-weight: bold;</string>
+           </property>
+           <property name="text">
+            <string>235 u</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+
+    <!-- Main Content Area - Rearranged as requested -->
+    <item>
+     <widget class="QFrame" name="mainContentFrame">
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Plain</enum>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: #222222;</string>
+      </property>
+      <layout class="QHBoxLayout" name="mainContentLayout">
+       <property name="spacing">
+        <number>2</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       
+       <!-- Main CGM Graph - Now larger and central -->
+       <item>
+        <widget class="QFrame" name="cgmGraphFrame">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>2</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Plain</enum>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: #333333;</string>
+         </property>
+         <layout class="QHBoxLayout" name="cgmGraphLayout">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          
+          <!-- Graph would be drawn in code - large central area -->
+          <item>
+           <spacer name="graphSpacer">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>180</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          
+          <!-- Markers on right side -->
+          <item>
+           <layout class="QVBoxLayout" name="cgmMarkersLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="rightMargin">
+             <number>5</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="marker22">
+              <property name="styleSheet">
+               <string notr="true">color: white; font-size: 10px;</string>
+              </property>
+              <property name="text">
+               <string>◀ 22</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="marker18">
+              <property name="styleSheet">
+               <string notr="true">color: white; font-size: 10px;</string>
+              </property>
+              <property name="text">
+               <string>◀ 18</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="marker14">
+              <property name="styleSheet">
+               <string notr="true">color: white; font-size: 10px;</string>
+              </property>
+              <property name="text">
+               <string>◀ 14</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="marker10">
+              <property name="styleSheet">
+               <string notr="true">color: white; font-size: 10px;</string>
+              </property>
+              <property name="text">
+               <string>◀ 10</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="marker6">
+              <property name="styleSheet">
+               <string notr="true">color: white; font-size: 10px;</string>
+              </property>
+              <property name="text">
+               <string>◀ 6</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="marker2">
+              <property name="styleSheet">
+               <string notr="true">color: white; font-size: 10px;</string>
+              </property>
+              <property name="text">
+               <string>◀ 2</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       
+       <!-- Right side - Glucose, Hours and Home Button - Now larger -->
+       <item>
+        <layout class="QVBoxLayout" name="rightSideLayout">
+         <property name="spacing">
+          <number>5</number>
+         </property>
+         <!-- Glucose Value - Now above Hours and larger -->
+         <item>
+          <widget class="QFrame" name="glucoseFrame">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>100</width>
+             <height>80</height>
+            </size>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #333333;</string>
+           </property>
+           <layout class="QVBoxLayout" name="glucoseFrameLayout">
+            <property name="leftMargin">
+             <number>5</number>
+            </property>
+            <property name="topMargin">
+             <number>5</number>
+            </property>
+            <property name="rightMargin">
+             <number>5</number>
+            </property>
+            <property name="bottomMargin">
+             <number>5</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="glucoseValueLabel">
+              <property name="styleSheet">
+               <string notr="true">color: white; font-size: 32px; font-weight: bold;</string>
+              </property>
+              <property name="text">
+               <string>4.9</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="glucoseUnitLabel">
+              <property name="styleSheet">
+               <string notr="true">color: white; font-size: 14px;</string>
+              </property>
+              <property name="text">
+               <string>mmol/L</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="glucoseTrendLabel">
+              <property name="styleSheet">
+               <string notr="true">color: white; font-size: 26px; font-weight: bold;</string>
+              </property>
+              <property name="text">
+               <string>➡</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         
+         <!-- Hours Since Sensor Change - Below Glucose and larger -->
+         <item>
+          <widget class="QFrame" name="hoursFrame">
+           <property name="minimumSize">
+            <size>
+             <width>100</width>
+             <height>60</height>
+            </size>
+           </property>
+           <property name="frameShape">
+            <enum>QFrame::NoFrame</enum>
+           </property>
+           <property name="frameShadow">
+            <enum>QFrame::Plain</enum>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #444444;</string>
+           </property>
+           <layout class="QVBoxLayout" name="hoursFrameLayout">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="leftMargin">
+             <number>5</number>
+            </property>
+            <property name="topMargin">
+             <number>5</number>
+            </property>
+            <property name="rightMargin">
+             <number>5</number>
+            </property>
+            <property name="bottomMargin">
+             <number>5</number>
+            </property>
+            <item>
+             <widget class="QLabel" name="hoursValueLabel">
+              <property name="styleSheet">
+               <string notr="true">color: white; font-size: 28px; font-weight: bold;</string>
+              </property>
+              <property name="text">
+               <string>3</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="hoursTextLabel">
+              <property name="styleSheet">
+               <string notr="true">color: white; font-size: 16px;</string>
+              </property>
+              <property name="text">
+               <string>HRS</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignCenter</set>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </widget>
+         </item>
+         
+         <!-- Tandem Logo Button - Now smaller and middle-right without text -->
+         <item>
+          <widget class="QPushButton" name="tandemLogoButton">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+           <property name="minimumSize">
+            <size>
+             <width>60</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>60</width>
+             <height>35</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton {
+  background-color: #666666;
+  border: none;
+  border-radius: 3px;
+}
+QPushButton:pressed {
+  background-color: #555555;
+}</string>
+           </property>
+           <property name="text">
+            <string></string>
+           </property>
+          </widget>
+         </item>
+         
+         <item>
+          <spacer name="rightSideSpacer">
+           <property name="orientation">
+            <enum>Qt::Vertical</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>20</width>
+             <height>5</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    
+    <!-- Insulin On Board and Bottom Buttons -->
+    <item>
+     <widget class="QFrame" name="bottomFrame">
+      <property name="minimumSize">
+       <size>
+        <width>0</width>
+        <height>60</height>
+       </size>
+      </property>
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>60</height>
+       </size>
+      </property>
+      <property name="frameShape">
+       <enum>QFrame::NoFrame</enum>
+      </property>
+      <property name="frameShadow">
+       <enum>QFrame::Plain</enum>
+      </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: #333333;</string>
+      </property>
+      <layout class="QVBoxLayout" name="bottomFrameLayout">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <!-- Insulin On Board -->
+       <item>
+        <widget class="QLabel" name="iobLabel">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>16777215</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">color: white; font-size: 12px; background-color: #444444;</string>
+         </property>
+         <property name="text">
+          <string>INSULIN ON BOARD    2.5 u | 3:45 hrs</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignCenter</set>
+         </property>
+        </widget>
+       </item>
+       <!-- Option and Bolus Buttons -->
+       <item>
+        <layout class="QHBoxLayout" name="actionButtonsLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="optionsButton">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton {
+  background-color: #444444;
+  color: #F0B000;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+}
+QPushButton:pressed {
+  background-color: #333333;
+}</string>
+           </property>
+           <property name="text">
+            <string>OPTIONS</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>icons/gear.png</normaloff>icons/gear.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="bolusButton">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton {
+  background-color: #555555;
+  color: #66AAFF;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+}
+QPushButton:pressed {
+  background-color: #444444;
+}</string>
+           </property>
+           <property name="text">
+            <string>BOLUS</string>
+           </property>
+           <property name="icon">
+            <iconset>
+             <normaloff>icons/drop.png</normaloff>icons/drop.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
  </widget>
  <resources/>
  <connections/>
