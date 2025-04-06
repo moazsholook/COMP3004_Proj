@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>320</width>
-    <height>240</height>
+    <width>724</width>
+    <height>381</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -34,7 +34,6 @@
      <number>0</number>
     </property>
     <item>
-     <!-- Status Bar - Time, Date, Battery, Insulin -->
      <widget class="QFrame" name="statusBarFrame">
       <property name="minimumSize">
        <size>
@@ -48,14 +47,14 @@
         <height>40</height>
        </size>
       </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: #444444;</string>
+      </property>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
       <property name="frameShadow">
        <enum>QFrame::Plain</enum>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">background-color: #444444;</string>
       </property>
       <layout class="QHBoxLayout" name="statusBarLayout">
        <property name="spacing">
@@ -73,7 +72,6 @@
        <property name="bottomMargin">
         <number>2</number>
        </property>
-       <!-- Battery Indicator -->
        <item>
         <layout class="QVBoxLayout" name="batteryLayout">
          <property name="spacing">
@@ -159,7 +157,6 @@ QProgressBar::chunk {
          </property>
         </spacer>
        </item>
-       <!-- Time and Date -->
        <item>
         <layout class="QVBoxLayout" name="timeLayout">
          <item>
@@ -222,7 +219,6 @@ QProgressBar::chunk {
          </property>
         </widget>
        </item>
-       <!-- Insulin Gauge -->
        <item>
         <layout class="QVBoxLayout" name="insulinLayout">
          <property name="spacing">
@@ -279,18 +275,16 @@ QProgressBar::chunk {
       </layout>
      </widget>
     </item>
-
-    <!-- Main Content Area - Rearranged as requested -->
     <item>
      <widget class="QFrame" name="mainContentFrame">
+      <property name="styleSheet">
+       <string notr="true">background-color: #222222;</string>
+      </property>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
       <property name="frameShadow">
        <enum>QFrame::Plain</enum>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">background-color: #222222;</string>
       </property>
       <layout class="QHBoxLayout" name="mainContentLayout">
        <property name="spacing">
@@ -308,8 +302,6 @@ QProgressBar::chunk {
        <property name="bottomMargin">
         <number>0</number>
        </property>
-       
-       <!-- Main CGM Graph - Now larger and central -->
        <item>
         <widget class="QFrame" name="cgmGraphFrame">
          <property name="sizePolicy">
@@ -318,14 +310,14 @@ QProgressBar::chunk {
            <verstretch>0</verstretch>
           </sizepolicy>
          </property>
+         <property name="styleSheet">
+          <string notr="true">background-color: #333333;</string>
+         </property>
          <property name="frameShape">
           <enum>QFrame::NoFrame</enum>
          </property>
          <property name="frameShadow">
           <enum>QFrame::Plain</enum>
-         </property>
-         <property name="styleSheet">
-          <string notr="true">background-color: #333333;</string>
          </property>
          <layout class="QHBoxLayout" name="cgmGraphLayout">
           <property name="spacing">
@@ -343,8 +335,6 @@ QProgressBar::chunk {
           <property name="bottomMargin">
            <number>0</number>
           </property>
-          
-          <!-- Graph would be drawn in code - large central area -->
           <item>
            <spacer name="graphSpacer">
             <property name="orientation">
@@ -358,8 +348,6 @@ QProgressBar::chunk {
             </property>
            </spacer>
           </item>
-          
-          <!-- Markers on right side -->
           <item>
            <layout class="QVBoxLayout" name="cgmMarkersLayout">
             <property name="spacing">
@@ -451,14 +439,11 @@ QProgressBar::chunk {
          </layout>
         </widget>
        </item>
-       
-       <!-- Right side - Glucose, Hours and Home Button - Now larger -->
        <item>
         <layout class="QVBoxLayout" name="rightSideLayout">
          <property name="spacing">
           <number>5</number>
          </property>
-         <!-- Glucose Value - Now above Hours and larger -->
          <item>
           <widget class="QFrame" name="glucoseFrame">
            <property name="sizePolicy">
@@ -473,14 +458,14 @@ QProgressBar::chunk {
              <height>80</height>
             </size>
            </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #333333;</string>
+           </property>
            <property name="frameShape">
             <enum>QFrame::NoFrame</enum>
            </property>
            <property name="frameShadow">
             <enum>QFrame::Plain</enum>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: #333333;</string>
            </property>
            <layout class="QVBoxLayout" name="glucoseFrameLayout">
             <property name="leftMargin">
@@ -537,8 +522,6 @@ QProgressBar::chunk {
            </layout>
           </widget>
          </item>
-         
-         <!-- Hours Since Sensor Change - Below Glucose and larger -->
          <item>
           <widget class="QFrame" name="hoursFrame">
            <property name="minimumSize">
@@ -547,14 +530,14 @@ QProgressBar::chunk {
              <height>60</height>
             </size>
            </property>
+           <property name="styleSheet">
+            <string notr="true">background-color: #444444;</string>
+           </property>
            <property name="frameShape">
             <enum>QFrame::NoFrame</enum>
            </property>
            <property name="frameShadow">
             <enum>QFrame::Plain</enum>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">background-color: #444444;</string>
            </property>
            <layout class="QVBoxLayout" name="hoursFrameLayout">
             <property name="spacing">
@@ -601,8 +584,6 @@ QProgressBar::chunk {
            </layout>
           </widget>
          </item>
-         
-         <!-- Tandem Logo Button - Now smaller and middle-right without text -->
          <item>
           <widget class="QPushButton" name="tandemLogoButton">
            <property name="sizePolicy">
@@ -634,11 +615,10 @@ QPushButton:pressed {
 }</string>
            </property>
            <property name="text">
-            <string></string>
+            <string/>
            </property>
           </widget>
          </item>
-         
          <item>
           <spacer name="rightSideSpacer">
            <property name="orientation">
@@ -657,8 +637,6 @@ QPushButton:pressed {
       </layout>
      </widget>
     </item>
-    
-    <!-- Insulin On Board and Bottom Buttons -->
     <item>
      <widget class="QFrame" name="bottomFrame">
       <property name="minimumSize">
@@ -673,14 +651,14 @@ QPushButton:pressed {
         <height>60</height>
        </size>
       </property>
+      <property name="styleSheet">
+       <string notr="true">background-color: #333333;</string>
+      </property>
       <property name="frameShape">
        <enum>QFrame::NoFrame</enum>
       </property>
       <property name="frameShadow">
        <enum>QFrame::Plain</enum>
-      </property>
-      <property name="styleSheet">
-       <string notr="true">background-color: #333333;</string>
       </property>
       <layout class="QVBoxLayout" name="bottomFrameLayout">
        <property name="spacing">
@@ -698,7 +676,6 @@ QPushButton:pressed {
        <property name="bottomMargin">
         <number>0</number>
        </property>
-       <!-- Insulin On Board -->
        <item>
         <widget class="QLabel" name="iobLabel">
          <property name="minimumSize">
@@ -724,7 +701,6 @@ QPushButton:pressed {
          </property>
         </widget>
        </item>
-       <!-- Option and Bolus Buttons -->
        <item>
         <layout class="QHBoxLayout" name="actionButtonsLayout">
          <property name="spacing">
