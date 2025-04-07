@@ -6,6 +6,40 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+    
+    // Set the application-wide stylesheet for better text visibility
+    this->setStyleSheet(R"(
+        QMainWindow {
+            background-color: #222222;
+        }
+        QLabel {
+            color: #ffffff;
+        }
+        QPushButton {
+            background-color: #444444;
+            color: #ffffff;
+            border: 1px solid #666666;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        QPushButton:hover {
+            background-color: #555555;
+        }
+        QPushButton:pressed {
+            background-color: #666666;
+        }
+        QLineEdit {
+            background-color: #333333;
+            color: #ffffff;
+            border: 1px solid #666666;
+            padding: 5px;
+            border-radius: 3px;
+        }
+        QDialog {
+            background-color: #222222;
+        }
+    )");
+    
     setupGlucoseChart();
     
     // Connect the buttons
@@ -93,44 +127,18 @@ void MainWindow::onBolusClicked()
 OptionsDialog::OptionsDialog(QWidget *parent) : QDialog(parent)
 {
     setWindowTitle("Options");
-    setStyleSheet("background-color: #222222;");
     setMinimumWidth(300);
 
     QVBoxLayout *layout = new QVBoxLayout(this);
+    layout->setSpacing(10);
+    layout->setContentsMargins(20, 20, 20, 20);
     
-    stopInsulinButton = new QPushButton("STOP INSULIN", this);
-    stopInsulinButton->setStyleSheet(
-        "QPushButton {"
-        "  background-color: #cc3333;"
-        "  color: white;"
-        "  border: none;"
-        "  padding: 10px;"
-        "  font-size: 16px;"
-        "  font-weight: bold;"
-        "}"
-        "QPushButton:pressed {"
-        "  background-color: #aa2222;"
-        "}"
-    );
+    stopInsulinButton = new QPushButton("Stop Insulin Delivery", this);
+    profilesButton = new QPushButton("Manage Profiles", this);
     
-    profilesButton = new QPushButton("PERSONAL PROFILES", this);
-    profilesButton->setStyleSheet(
-        "QPushButton {"
-        "  background-color: #444444;"
-        "  color: white;"
-        "  border: none;"
-        "  padding: 10px;"
-        "  font-size: 16px;"
-        "  font-weight: bold;"
-        "}"
-        "QPushButton:pressed {"
-        "  background-color: #333333;"
-        "}"
-    );
-
     layout->addWidget(stopInsulinButton);
     layout->addWidget(profilesButton);
-
+    
     connect(stopInsulinButton, &QPushButton::clicked, this, &OptionsDialog::onStopInsulinClicked);
     connect(profilesButton, &QPushButton::clicked, this, &OptionsDialog::onProfilesClicked);
 }
@@ -152,66 +160,29 @@ void OptionsDialog::onProfilesClicked()
 ManualBolusDialog::ManualBolusDialog(QWidget *parent) : QDialog(parent)
 {
     setWindowTitle("Manual Bolus");
-    setStyleSheet("background-color: #222222; color: white;");
     setMinimumWidth(300);
 
     QVBoxLayout *mainLayout = new QVBoxLayout(this);
-    QFormLayout *formLayout = new QFormLayout();
-
-    bgInput = new QLineEdit(this);
-    bgInput->setStyleSheet(
-        "QLineEdit {"
-        "  background-color: #333333;"
-        "  color: white;"
-        "  border: 1px solid #444444;"
-        "  padding: 5px;"
-        "}"
-    );
+    mainLayout->setSpacing(10);
+    mainLayout->setContentsMargins(20, 20, 20, 20);
     
+    QFormLayout *formLayout = new QFormLayout();
+    formLayout->setSpacing(10);
+    
+    bgInput = new QLineEdit(this);
     carbsInput = new QLineEdit(this);
-    carbsInput->setStyleSheet(bgInput->styleSheet());
-
-    formLayout->addRow("Blood Glucose (mmol/L):", bgInput);
-    formLayout->addRow("Carbs (g):", carbsInput);
-
+    bolusResultLabel = new QLabel("Calculated Bolus: 0.0 units", this);
     calculateButton = new QPushButton("Calculate", this);
-    calculateButton->setStyleSheet(
-        "QPushButton {"
-        "  background-color: #444444;"
-        "  color: white;"
-        "  border: none;"
-        "  padding: 10px;"
-        "  font-size: 14px;"
-        "}"
-        "QPushButton:pressed {"
-        "  background-color: #333333;"
-        "}"
-    );
-
-    confirmButton = new QPushButton("Confirm Bolus", this);
-    confirmButton->setStyleSheet(
-        "QPushButton {"
-        "  background-color: #66aaff;"
-        "  color: white;"
-        "  border: none;"
-        "  padding: 10px;"
-        "  font-size: 14px;"
-        "}"
-        "QPushButton:pressed {"
-        "  background-color: #5599ee;"
-        "}"
-    );
-    confirmButton->setEnabled(false);
-
-    bolusResultLabel = new QLabel(this);
-    bolusResultLabel->setStyleSheet("color: white; font-size: 16px;");
-    bolusResultLabel->setAlignment(Qt::AlignCenter);
-
+    confirmButton = new QPushButton("Confirm", this);
+    
+    formLayout->addRow("Blood Glucose (mmol/L):", bgInput);
+    formLayout->addRow("Carbohydrates (g):", carbsInput);
+    
     mainLayout->addLayout(formLayout);
-    mainLayout->addWidget(calculateButton);
     mainLayout->addWidget(bolusResultLabel);
+    mainLayout->addWidget(calculateButton);
     mainLayout->addWidget(confirmButton);
-
+    
     connect(calculateButton, &QPushButton::clicked, this, &ManualBolusDialog::onCalculateClicked);
     connect(confirmButton, &QPushButton::clicked, this, &ManualBolusDialog::onConfirmClicked);
 }
