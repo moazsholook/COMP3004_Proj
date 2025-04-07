@@ -1,0 +1,414 @@
+✅ Use Case 1: Turn On Pump
+Primary Actor: Insulin Pump User
+ Stakeholders: User
+ Pre-conditions:
+Pump is charged
+
+
+Pump is connected to an infusion site
+
+
+Pump is off
+
+
+Success Guarantee:
+ Pump powers on and is ready for user interaction.
+Main Success Scenario:
+User presses and holds the power button
+
+
+Pump displays startup screen
+
+
+Pump completes boot sequence and displays home screen
+
+
+Extensions:
+1a. If battery is too low, pump displays a warning and does not turn on until charged.
+
+
+
+✅ Use Case 2: Access System via PIN
+Primary Actor: Insulin Pump User
+ Stakeholders: User
+ Pre-conditions:
+Pump is powered on
+
+
+Lock screen is active
+
+
+Success Guarantee:
+ User gains access to the pump.
+Main Success Scenario:
+User is prompted to enter PIN
+
+
+System verifies PIN
+
+
+User is granted access to main menu
+
+
+Extensions:
+1a. If PIN is incorrect, system shows error and allows retry
+
+
+1b. After 3 failed attempts, system locks temporarily
+
+
+
+✅ Use Case 3: Set Up Profile (Mode)
+Primary Actor: Insulin Pump User
+ Stakeholders: User, Healthcare Provider
+ Pre-conditions:
+Pump is unlocked
+
+
+User is in profile management menu
+
+
+Success Guarantee:
+ A new profile (e.g., “Morning”) is saved and selectable.
+Main Success Scenario:
+User selects “Add New Profile”
+
+
+User enters:
+
+
+Profile name (e.g., Morning, Exercise)
+
+
+Basal rate (e.g., 1.0 U/hr)
+
+
+Insulin-to-Carb Ratio (ICR)
+
+
+Correction Factor (CF)
+
+
+Target BG
+
+
+System saves profile
+
+
+Extensions:
+2a. If required fields are missing, system prompts user to complete them
+
+
+
+✅ Use Case 4: Switch Profile
+Primary Actor: Insulin Pump User
+ Stakeholders: User
+ Pre-conditions:
+At least one profile is configured
+
+
+Pump is unlocked
+
+
+Success Guarantee:
+ Selected profile becomes active and affects future calculations.
+Main Success Scenario:
+User opens profile selector
+
+
+User selects an existing profile
+
+
+System loads parameters (ICR, CF, etc.) for that profile
+
+
+
+✅ Use Case 5: Manual Bolus
+Primary Actor: Insulin Pump User
+ Stakeholders: User, Healthcare Provider
+ Pre-conditions:
+User is logged in
+
+
+A profile is active
+
+
+Pump is powered on
+
+
+Success Guarantee:
+ Bolus dose is correctly calculated and shown to the user.
+Main Success Scenario:
+User selects “Manual Bolus”
+
+
+User enters:
+
+
+Current BG
+
+
+Total carbs (grams)
+
+
+IOB (Insulin on Board)
+
+
+(Optional) Bolus duration & immediate %
+
+
+System calculates:
+
+
+Carb bolus
+
+
+Correction bolus
+
+
+Total bolus
+
+
+Final bolus after IOB
+
+
+Immediate/extended dose breakdown
+
+
+System displays bolus plan
+
+
+Extensions:
+4a. If user changes inputs, system recalculates
+
+
+4b. If user cancels, nothing is delivered
+
+
+
+✅ Use Case 6: Deliver Insulin
+Primary Actor: Insulin Pump User
+ Stakeholders: User, Healthcare Provider
+ Pre-conditions:
+Bolus plan has been confirmed
+
+
+Pump is ready for delivery
+
+
+Success Guarantee:
+ Correct amount of insulin is delivered immediately and over time.
+Main Success Scenario:
+User reviews bolus plan
+
+
+User confirms delivery
+
+
+System delivers immediate dose
+
+
+System schedules extended dose
+
+
+Extensions:
+5a. If extended dose is interrupted, system logs the event
+
+
+5b. If delivery fails, system alerts user
+
+
+
+✅ Use Case 7: Stop Insulin Delivery (Emergency)
+Primary Actor: Insulin Pump User
+ Stakeholders: User, Healthcare Provider
+ Pre-conditions:
+Pump is delivering insulin
+
+
+Success Guarantee:
+ All insulin delivery is halted.
+Main Success Scenario:
+User selects "Stop Delivery" from options
+
+
+System halts insulin flow
+
+
+Event is logged
+
+
+Extensions:
+2a. If user reactivates delivery later, previous settings are restored
+
+
+
+✅ Use Case 8: Automatic Bolus
+Primary Actor: Insulin Pump System
+ Stakeholders: User, Healthcare Provider
+ Pre-conditions:
+Active profile (with ICR, CF, target BG)
+
+
+Pump is unlocked and functional
+
+
+Input data (BG, carbs, IOB) is available
+
+
+Success Guarantee:
+ Insulin is automatically calculated and delivered.
+Main Success Scenario:
+System receives BG and carb input
+
+
+System calculates:
+
+
+Carb bolus
+
+
+Correction bolus
+
+
+Adjusted for IOB
+
+
+Immediate/extended breakdown
+
+
+Delivers insulin
+
+
+Logs event
+
+
+Extensions:
+1a. If BG is below target, correction bolus is skipped
+
+
+1b. If delivery fails, alert is shown
+
+
+
+✅ Use Case 9: Low Battery Warning
+Primary Actor: System
+ Stakeholders: User
+ Pre-conditions:
+Pump is on
+
+
+Battery < threshold (e.g., 10%)
+
+
+Success Guarantee:
+ User is notified and prompted to charge.
+Main Success Scenario:
+System detects low battery
+
+
+Warning appears on screen
+
+
+User is prevented from starting new delivery
+
+
+Extensions:
+1a. If ignored, system repeats warning
+
+
+1b. If battery hits critical level, pump shuts down after saving state
+
+
+
+✅ Use Case 10: Charge Battery
+Primary Actor: User
+ Stakeholders: User
+ Pre-conditions:
+Pump is on or off
+
+
+Battery is not full
+
+
+Success Guarantee:
+ Battery charges to full or desired level.
+Main Success Scenario:
+User presses “Charge Battery”
+
+
+System simulates charging
+
+
+Battery % increases
+
+
+Low battery warning disappears
+
+
+Extensions:
+1a. If battery is full, system notifies user
+
+
+1b. Charging may be canceled by user
+
+
+
+✅ Use Case 11: Refill Cartridge
+Primary Actor: User
+ Stakeholders: User
+ Pre-conditions:
+Pump is on
+
+
+Insulin cartridge is not full
+
+
+Success Guarantee:
+ Cartridge is refilled to 100%.
+Main Success Scenario:
+User presses “Refill Cartridge”
+
+
+System resets insulin level to 100%
+
+
+Confirmation is shown
+
+
+Extensions:
+1a. If already full, no action taken
+
+
+1b. If refill fails, warning is shown
+
+
+
+✅ Use Case 12: Turn Off Pump (Last)
+Primary Actor: Insulin Pump User
+ Stakeholders: User
+ Pre-conditions:
+Pump is powered on
+
+
+Success Guarantee:
+ Pump is safely shut down.
+Main Success Scenario:
+User navigates to options menu
+
+
+Selects "Power Off"
+
+
+Confirms shutdown
+
+
+Pump powers down
+
+
+Extensions:
+3a. If shutdown is canceled, pump returns to home screen
+
+
+
+
