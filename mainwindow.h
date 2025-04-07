@@ -3,9 +3,12 @@
 
 #include <QMainWindow>
 #include <QtCharts>
+<<<<<<< HEAD
 #include <QLineSeries>
 #include <QChart>
 #include <QChartView>
+=======
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }

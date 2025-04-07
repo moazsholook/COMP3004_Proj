@@ -22,8 +22,13 @@ QT_BEGIN_MOC_NAMESPACE
 QT_WARNING_PUSH
 QT_WARNING_DISABLE_DEPRECATED
 struct qt_meta_stringdata_MainWindow_t {
+<<<<<<< HEAD
     QByteArrayData data[4];
     char stringdata0[46];
+=======
+    QByteArrayData data[1];
+    char stringdata0[11];
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
 };
 #define QT_MOC_LITERAL(idx, ofs, len) \
     Q_STATIC_BYTE_ARRAY_DATA_HEADER_INITIALIZER_WITH_OFFSET(len, \
@@ -32,6 +37,7 @@ struct qt_meta_stringdata_MainWindow_t {
     )
 static const qt_meta_stringdata_MainWindow_t qt_meta_stringdata_MainWindow = {
     {
+<<<<<<< HEAD
 QT_MOC_LITERAL(0, 0, 10), // "MainWindow"
 QT_MOC_LITERAL(1, 11, 17), // "onRechargeClicked"
 QT_MOC_LITERAL(2, 29, 0), // ""
@@ -40,6 +46,12 @@ QT_MOC_LITERAL(3, 30, 15) // "onRefillClicked"
     },
     "MainWindow\0onRechargeClicked\0\0"
     "onRefillClicked"
+=======
+QT_MOC_LITERAL(0, 0, 10) // "MainWindow"
+
+    },
+    "MainWindow"
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
 };
 #undef QT_MOC_LITERAL
 
@@ -49,13 +61,18 @@ static const uint qt_meta_data_MainWindow[] = {
        8,       // revision
        0,       // classname
        0,    0, // classinfo
+<<<<<<< HEAD
        2,   14, // methods
+=======
+       0,    0, // methods
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
        0,       // flags
        0,       // signalCount
 
+<<<<<<< HEAD
  // slots: name, argc, parameters, tag, flags
        1,    0,   24,    2, 0x08 /* Private */,
        3,    0,   25,    2, 0x08 /* Private */,
@@ -64,11 +81,14 @@ static const uint qt_meta_data_MainWindow[] = {
     QMetaType::Void,
     QMetaType::Void,
 
+=======
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
        0        // eod
 };
 
 void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
 {
+<<<<<<< HEAD
     if (_c == QMetaObject::InvokeMetaMethod) {
         auto *_t = static_cast<MainWindow *>(_o);
         (void)_t;
@@ -78,6 +98,11 @@ void MainWindow::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, 
         default: ;
         }
     }
+=======
+    (void)_o;
+    (void)_id;
+    (void)_c;
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
     (void)_a;
 }
 
@@ -107,6 +132,7 @@ void *MainWindow::qt_metacast(const char *_clname)
 int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
 {
     _id = QMainWindow::qt_metacall(_c, _id, _a);
+<<<<<<< HEAD
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
@@ -118,6 +144,8 @@ int MainWindow::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
             *reinterpret_cast<int*>(_a[0]) = -1;
         _id -= 2;
     }
+=======
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
     return _id;
 }
 QT_WARNING_POP

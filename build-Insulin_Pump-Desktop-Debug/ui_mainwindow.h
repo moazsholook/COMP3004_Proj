@@ -34,7 +34,10 @@ public:
     QVBoxLayout *batteryLayout;
     QProgressBar *batteryProgressBar;
     QLabel *batteryLabel;
+<<<<<<< HEAD
     QPushButton *rechargeButton;
+=======
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
     QLabel *filterIcon;
     QSpacerItem *horizontalSpacer1;
     QVBoxLayout *timeLayout;
@@ -45,7 +48,10 @@ public:
     QVBoxLayout *insulinLayout;
     QProgressBar *insulinProgressBar;
     QLabel *insulinLabel;
+<<<<<<< HEAD
     QPushButton *refillButton;
+=======
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
     QFrame *mainContentFrame;
     QHBoxLayout *mainContentLayout;
     QFrame *cgmGraphFrame;
@@ -128,6 +134,7 @@ public:
 
         batteryLayout->addWidget(batteryLabel);
 
+<<<<<<< HEAD
         rechargeButton = new QPushButton(statusBarFrame);
         rechargeButton->setObjectName(QString::fromUtf8("rechargeButton"));
         rechargeButton->setMinimumSize(QSize(50, 15));
@@ -146,6 +153,8 @@ public:
 
         batteryLayout->addWidget(rechargeButton);
 
+=======
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
 
         statusBarLayout->addLayout(batteryLayout);
 
@@ -220,6 +229,7 @@ public:
 
         insulinLayout->addWidget(insulinLabel);
 
+<<<<<<< HEAD
         refillButton = new QPushButton(statusBarFrame);
         refillButton->setObjectName(QString::fromUtf8("refillButton"));
         refillButton->setMinimumSize(QSize(50, 15));
@@ -238,6 +248,8 @@ public:
 
         insulinLayout->addWidget(refillButton);
 
+=======
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
 
         statusBarLayout->addLayout(insulinLayout);
 
@@ -501,13 +513,19 @@ public:
     {
         MainWindow->setWindowTitle(QCoreApplication::translate("MainWindow", "T:SLIM X2 Insulin Pump", nullptr));
         batteryLabel->setText(QCoreApplication::translate("MainWindow", "100%", nullptr));
+<<<<<<< HEAD
         rechargeButton->setText(QCoreApplication::translate("MainWindow", "RECHARGE", nullptr));
+=======
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
         filterIcon->setText(QCoreApplication::translate("MainWindow", "\342\226\274", nullptr));
         timeLabel->setText(QCoreApplication::translate("MainWindow", "10:20", nullptr));
         dateLabel->setText(QCoreApplication::translate("MainWindow", "14 Nov", nullptr));
         bolusIcon->setText(QCoreApplication::translate("MainWindow", "B", nullptr));
         insulinLabel->setText(QCoreApplication::translate("MainWindow", "235 u", nullptr));
+<<<<<<< HEAD
         refillButton->setText(QCoreApplication::translate("MainWindow", "REFILL", nullptr));
+=======
+>>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
         marker22->setText(QCoreApplication::translate("MainWindow", "\342\227\200 22", nullptr));
         marker18->setText(QCoreApplication::translate("MainWindow", "\342\227\200 18", nullptr));
         marker14->setText(QCoreApplication::translate("MainWindow", "\342\227\200 14", nullptr));
