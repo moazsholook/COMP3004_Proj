@@ -3,16 +3,50 @@
 
 #include <QMainWindow>
 #include <QtCharts>
-<<<<<<< HEAD
 #include <QLineSeries>
 #include <QChart>
 #include <QChartView>
-=======
->>>>>>> eb6053f3cc6bf5eb42807707cf41208950aed492
+#include <QDialog>
+#include <QPushButton>
+#include <QVBoxLayout>
+#include <QLabel>
+#include <QLineEdit>
+#include <QFormLayout>
+#include <QMessageBox>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
+
+// Options Dialog
+class OptionsDialog : public QDialog {
+    Q_OBJECT
+public:
+    explicit OptionsDialog(QWidget *parent = nullptr);
+private slots:
+    void onStopInsulinClicked();
+    void onProfilesClicked();
+private:
+    QPushButton *stopInsulinButton;
+    QPushButton *profilesButton;
+};
+
+// Manual Bolus Dialog
+class ManualBolusDialog : public QDialog {
+    Q_OBJECT
+public:
+    explicit ManualBolusDialog(QWidget *parent = nullptr);
+private slots:
+    void onCalculateClicked();
+    void onConfirmClicked();
+private:
+    QLineEdit *bgInput;
+    QLineEdit *carbsInput;
+    QLabel *bolusResultLabel;
+    QPushButton *calculateButton;
+    QPushButton *confirmButton;
+    float calculatedBolus;
+};
 
 class MainWindow : public QMainWindow
 {
@@ -22,6 +56,10 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+private slots:
+    void onOptionsClicked();
+    void onBolusClicked();
+
 private:
     Ui::MainWindow *ui;
     QChart *glucoseChart;
@@ -29,9 +67,5 @@ private:
     QChartView *chartView;
     
     void setupGlucoseChart();
-
-private slots:
-    void onRechargeClicked();
-    void onRefillClicked();
 };
 #endif // MAINWINDOW_H
