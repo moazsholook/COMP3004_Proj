@@ -123,6 +123,38 @@ QProgressBar::chunk {
            </property>
           </widget>
          </item>
+         <item>
+          <widget class="QPushButton" name="rechargeButton">
+           <property name="minimumSize">
+            <size>
+             <width>50</width>
+             <height>15</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>50</width>
+             <height>15</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton {
+    background-color: #333333;
+    color: #55cc55;
+    border: none;
+    font-size: 8px;
+    font-weight: bold;
+    border-radius: 2px;
+}
+QPushButton:pressed {
+    background-color: #444444;
+}</string>
+           </property>
+           <property name="text">
+            <string>RECHARGE</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
        <item>
@@ -267,6 +299,38 @@ QProgressBar::chunk {
            </property>
            <property name="alignment">
             <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="refillButton">
+           <property name="minimumSize">
+            <size>
+             <width>50</width>
+             <height>15</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>50</width>
+             <height>15</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton {
+    background-color: #333333;
+    color: #66aaff;
+    border: none;
+    font-size: 8px;
+    font-weight: bold;
+    border-radius: 2px;
+}
+QPushButton:pressed {
+    background-color: #444444;
+}</string>
+           </property>
+           <property name="text">
+            <string>REFILL</string>
            </property>
           </widget>
          </item>
