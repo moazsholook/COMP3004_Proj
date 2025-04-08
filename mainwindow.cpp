@@ -215,8 +215,8 @@ void OptionsDialog::onStopInsulinClicked()
 
 void OptionsDialog::onProfilesClicked()
 {
-    // This would open the profiles management window
-    QMessageBox::information(this, "Profiles", "Profile management will be implemented here");
+    ProfilesDialog dialog(this);
+    dialog.exec();
 }
 
 // Manual Bolus Dialog Implementation
@@ -275,5 +275,154 @@ void ManualBolusDialog::onConfirmClicked()
     QMessageBox::information(this, "Bolus Confirmed", 
         QString("Delivering %1 units of insulin").arg(calculatedBolus));
     close();
+}
+
+ProfilesDialog::ProfilesDialog(QWidget *parent) : QDialog(parent)
+{
+    setWindowTitle("Profile Management");
+    setMinimumWidth(300);
+    setStyleSheet("background-color: #333333; color: white;");
+
+    setupUI();
+    refreshProfilesList();
+}
+
+void ProfilesDialog::setupUI()
+{
+    mainLayout = new QVBoxLayout(this);
+    
+    // Add Profile button at the top
+    addProfileButton = new QPushButton("ADD NEW PROFILE", this);
+    addProfileButton->setStyleSheet(
+        "QPushButton {"
+        "  background-color: #444444;"
+        "  color: #F0B000;"
+        "  border: none;"
+        "  padding: 10px;"
+        "  font-size: 16px;"
+        "  font-weight: bold;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #333333;"
+        "}"
+    );
+    connect(addProfileButton, &QPushButton::clicked, this, &ProfilesDialog::onAddProfileClicked);
+    
+    mainLayout->addWidget(addProfileButton);
+    
+    // Container for profile buttons
+    QWidget *profilesContainer = new QWidget(this);
+    profilesLayout = new QVBoxLayout(profilesContainer);
+    mainLayout->addWidget(profilesContainer);
+}
+
+void ProfilesDialog::refreshProfilesList()
+{
+    // Clear existing profile buttons
+    for (auto button : profileButtons) {
+        profilesLayout->removeWidget(button);
+        delete button;
+    }
+    profileButtons.clear();
+    
+    // Add sample profiles (in a real app, these would come from storage)
+    QStringList profiles = {"Morning", "Exercise", "Night"};
+    for (const QString &profile : profiles) {
+        QPushButton *button = new QPushButton(profile, this);
+        button->setStyleSheet(
+            "QPushButton {"
+            "  background-color: #444444;"
+            "  color: white;"
+            "  border: none;"
+            "  padding: 10px;"
+            "  font-size: 14px;"
+            "  text-align: left;"
+            "}"
+            "QPushButton:pressed {"
+            "  background-color: #333333;"
+            "}"
+        );
+        connect(button, &QPushButton::clicked, this, [this, profile]() {
+            onProfileSelected(profile);
+        });
+        profilesLayout->addWidget(button);
+        profileButtons.push_back(button);
+    }
+}
+
+void ProfilesDialog::onAddProfileClicked()
+{
+    // Create new profile dialog
+    QDialog newProfileDialog(this);
+    newProfileDialog.setWindowTitle("New Profile");
+    newProfileDialog.setStyleSheet("background-color: #333333; color: white;");
+    
+    QFormLayout *form = new QFormLayout(&newProfileDialog);
+    
+    // Create input fields
+    QLineEdit *nameInput = new QLineEdit(&newProfileDialog);
+    QLineEdit *basalInput = new QLineEdit(&newProfileDialog);
+    QLineEdit *icrInput = new QLineEdit(&newProfileDialog);
+    QLineEdit *cfInput = new QLineEdit(&newProfileDialog);
+    QLineEdit *targetBGInput = new QLineEdit(&newProfileDialog);
+    
+    // Style input fields
+    QString inputStyle = "background-color: #444444; color: white; padding: 5px;";
+    nameInput->setStyleSheet(inputStyle);
+    basalInput->setStyleSheet(inputStyle);
+    icrInput->setStyleSheet(inputStyle);
+    cfInput->setStyleSheet(inputStyle);
+    targetBGInput->setStyleSheet(inputStyle);
+    
+    // Add fields to form
+    form->addRow("Profile Name:", nameInput);
+    form->addRow("Basal Rate (U/hr):", basalInput);
+    form->addRow("Insulin-to-Carb Ratio:", icrInput);
+    form->addRow("Correction Factor:", cfInput);
+    form->addRow("Target BG (mmol/L):", targetBGInput);
+    
+    // Add save button
+    QPushButton *saveButton = new QPushButton("SAVE PROFILE", &newProfileDialog);
+    saveButton->setStyleSheet(
+        "QPushButton {"
+        "  background-color: #55cc55;"
+        "  color: white;"
+        "  border: none;"
+        "  padding: 10px;"
+        "  font-size: 16px;"
+        "  font-weight: bold;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #44bb44;"
+        "}"
+    );
+    form->addRow(saveButton);
+    
+    connect(saveButton, &QPushButton::clicked, &newProfileDialog, [&]() {
+        // Validate inputs
+        if (nameInput->text().isEmpty() || basalInput->text().isEmpty() ||
+            icrInput->text().isEmpty() || cfInput->text().isEmpty() ||
+            targetBGInput->text().isEmpty()) {
+            QMessageBox::warning(&newProfileDialog, "Incomplete Form", 
+                               "Please fill in all fields.");
+            return;
+        }
+        
+        // In a real app, save the profile here
+        refreshProfilesList();
+        newProfileDialog.accept();
+    });
+    
+    newProfileDialog.exec();
+}
+
+void ProfilesDialog::onProfileSelected(const QString& name)
+{
+    // Show confirmation
+    QMessageBox::information(this, "Profile Selected", 
+                           "Selected profile: " + name + "\nProfile parameters loaded.");
+    
+    // In a real app, this would actually load the profile parameters
+    accept();
 }
 

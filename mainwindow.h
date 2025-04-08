@@ -50,6 +50,27 @@ private:
     float calculatedBolus;
 };
 
+// Profiles Dialog
+class ProfilesDialog : public QDialog {
+    Q_OBJECT
+public:
+    explicit ProfilesDialog(QWidget *parent = nullptr);
+
+private slots:
+    void onAddProfileClicked();
+    void onProfileSelected(const QString& name);
+
+private:
+    QVBoxLayout *mainLayout;
+    QVBoxLayout *profilesLayout;
+    QPushButton *addProfileButton;
+    std::vector<QPushButton*> profileButtons;
+    
+    void createNewProfile();
+    void setupUI();
+    void refreshProfilesList();
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
