@@ -4,9 +4,23 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
-    , insulinLevel(300.0)  // Initialize with full cartridge
+    , profiles()
+    , activeProfile()
+    , insulinLevel(100.0f)  // Start with 100 units
+    , batteryLevel(100)
+    , batteryTimer(new QTimer(this))
+    , glucoseTimer(new QTimer(this))
+    , glucoseChart(new QChart())
+    , glucoseSeries(new QLineSeries())
+    , glucoseAxisX(new QValueAxis())
+    , glucoseAxisY(new QValueAxis())
+    , profileLabel(new QLabel("No Active Profile", this))
+    , battery(new Battery())
 {
     ui->setupUi(this);
+    
+    // Add profile label to status bar
+    statusBar()->addPermanentWidget(profileLabel);
     
     // Set the application-wide stylesheet for better text visibility
     this->setStyleSheet(R"(
@@ -42,11 +56,9 @@ MainWindow::MainWindow(QWidget *parent)
     )");
     
     // Initialize battery
-    battery = new Battery();
     updateBatteryDisplay();
     
     // Set up battery drain timer (drain 1% every 5 seconds)
-    batteryTimer = new QTimer(this);
     connect(batteryTimer, &QTimer::timeout, this, &MainWindow::updateBatteryLevel);
     batteryTimer->start(5000); // 5 seconds
     
@@ -202,11 +214,6 @@ void MainWindow::onOptionsClicked()
 
 void MainWindow::onBolusClicked()
 {
-    if (activeProfile.isEmpty()) {
-        QMessageBox::warning(this, "Warning", "No active profile selected! Please select a profile first.");
-        return;
-    }
-
     ManualBolusDialog dialog(this, activeProfile);
     if (dialog.exec() == QDialog::Accepted) {
         // Get the calculated bolus amount from the dialog
@@ -554,19 +561,23 @@ void ProfilesDialog::onProfileSelected(const QString& name)
 
 void ProfilesDialog::onSelectProfileClicked()
 {
-    if (selectedProfile.isEmpty()) {
-        QMessageBox::warning(this, "No Profile Selected", 
-            "Please select a profile first by clicking on it.");
+    if (profiles.isEmpty()) {
+        QMessageBox::warning(this, "No Profiles", "No profiles available. Please create a profile first.");
         return;
     }
+
+    bool ok;
+    QString profile = QInputDialog::getItem(this, "Select Profile",
+                                          "Choose a profile:", profiles.keys(), 0, false, &ok);
     
-    // Get the MainWindow instance
-    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
-    if (mainWindow) {
-        mainWindow->setActiveProfile(selectedProfile);
-        QMessageBox::information(this, "Profile Selected", 
-            QString("Profile '%1' has been selected.\nYou can now use the bolus button.").arg(selectedProfile));
-        accept();  // Close the dialog after selection
+    if (ok && !profile.isEmpty()) {
+        // Get the MainWindow instance and call its setActiveProfile method
+        MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
+        if (mainWindow) {
+            mainWindow->setActiveProfile(profile);
+            QMessageBox::information(this, "Profile Selected", 
+                QString("Profile '%1' has been selected and is now active.").arg(profile));
+        }
     }
 }
 
@@ -818,5 +829,9 @@ void MainWindow::setActiveProfile(const QString& profile)
     activeProfile = profile;
     // Update the bolus button state
     ui->bolusButton->setEnabled(!profile.isEmpty());
+    // Update the profile label if it exists
+    if (profileLabel) {
+        profileLabel->setText(QString("Active Profile: %1").arg(profile));
+    }
 }
 

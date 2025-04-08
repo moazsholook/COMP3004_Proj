@@ -115,13 +115,19 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
+    QMap<QString, Profile*> profiles;
+    QString activeProfile;
+    float insulinLevel;
+    int batteryLevel;
+    QTimer *batteryTimer;
+    QTimer *glucoseTimer;
     QChart *glucoseChart;
     QLineSeries *glucoseSeries;
-    QChartView *chartView;
-    QTimer *batteryTimer;
+    QValueAxis *glucoseAxisX;
+    QValueAxis *glucoseAxisY;
+    QLabel *profileLabel;
     Battery *battery;
-    float insulinLevel = 300.0; // Maximum insulin level (300 units)
-    QString activeProfile;
+    QChartView *chartView;
     
     void setupGlucoseChart();
     void updateBatteryDisplay();
