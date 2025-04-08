@@ -15,6 +15,7 @@
 #include <QMessageBox>
 #include <QTimer>
 #include "Battery.h"
+#include "Profile.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -37,7 +38,7 @@ private:
 class ManualBolusDialog : public QDialog {
     Q_OBJECT
 public:
-    explicit ManualBolusDialog(QWidget *parent = nullptr);
+    explicit ManualBolusDialog(QWidget *parent = nullptr, const QString& activeProfile = QString());
     float getCalculatedBolus() const { return calculatedBolus; }
 
 signals:
@@ -54,27 +55,46 @@ private:
     QPushButton *calculateButton;
     QPushButton *confirmButton;
     float calculatedBolus;
+    QString activeProfile;
 };
 
 // Profiles Dialog
-class ProfilesDialog : public QDialog {
+class ProfilesDialog : public QDialog
+{
     Q_OBJECT
+
 public:
     explicit ProfilesDialog(QWidget *parent = nullptr);
 
 private slots:
     void onAddProfileClicked();
     void onProfileSelected(const QString& name);
+    void onViewProfileClicked();
+    void onEditProfileClicked();
+    void onDeleteProfileClicked();
+    void onSelectProfileClicked();
 
 private:
     QVBoxLayout *mainLayout;
     QVBoxLayout *profilesLayout;
     QPushButton *addProfileButton;
-    std::vector<QPushButton*> profileButtons;
+    QList<QPushButton*> profileButtons;
+    QMap<QString, Profile*> profiles;  // Store profiles by name
     
-    void createNewProfile();
+    // Action buttons
+    QPushButton *viewButton;
+    QPushButton *editButton;
+    QPushButton *deleteButton;
+    QPushButton *selectButton;
+    QString selectedProfile;
+    
     void setupUI();
     void refreshProfilesList();
+    void saveProfiles();
+    void loadProfiles();
+    void showProfileDetails(const QString& name);
+    void editProfile(const QString& name);
+    void updateActionButtons();
 };
 
 class MainWindow : public QMainWindow
@@ -84,6 +104,7 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    void setActiveProfile(const QString& profile);  // Just the declaration
 
 private slots:
     void onOptionsClicked();
@@ -100,6 +121,7 @@ private:
     QTimer *batteryTimer;
     Battery *battery;
     float insulinLevel = 300.0; // Maximum insulin level (300 units)
+    QString activeProfile;
     
     void setupGlucoseChart();
     void updateBatteryDisplay();

@@ -202,33 +202,34 @@ void MainWindow::onOptionsClicked()
 
 void MainWindow::onBolusClicked()
 {
-    if (insulinLevel <= 0) {
-        QMessageBox::critical(this, "No Insulin",
-            "Insulin cartridge is empty! Please refill before delivering bolus.");
+    if (activeProfile.isEmpty()) {
+        QMessageBox::warning(this, "Warning", "No active profile selected! Please select a profile first.");
         return;
     }
-    
-    ManualBolusDialog *dialog = new ManualBolusDialog(this);
-    connect(dialog, &ManualBolusDialog::bolusConfirmed, this, [this](float amount) {
-        if (amount > insulinLevel) {
-            QMessageBox::critical(this, "Insufficient Insulin",
-                "Not enough insulin in cartridge for this bolus!");
+
+    ManualBolusDialog dialog(this, activeProfile);
+    if (dialog.exec() == QDialog::Accepted) {
+        // Get the calculated bolus amount from the dialog
+        float bolusAmount = dialog.getCalculatedBolus();
+        
+        // Check if we have enough insulin in both the display and cartridge
+        if (bolusAmount > insulinLevel) {
+            QMessageBox::warning(this, "Insufficient Insulin", 
+                "Not enough insulin remaining for this bolus!");
             return;
         }
         
-        // Deduct insulin and update display
-        insulinLevel -= amount;
+        // Deduct the bolus amount from the display
+        insulinLevel -= bolusAmount;
+        
+        // Update displays
         updateInsulinDisplay();
         
-        // Update IOB label
-        QString currentIOB = ui->iobLabel->text();
-        float iobValue = currentIOB.split(" ")[3].toFloat();
-        float newIOB = iobValue + amount;
-        ui->iobLabel->setText(QString("INSULIN ON BOARD    %1 u | 3:45 hrs").arg(newIOB));
-    });
-    
-    dialog->exec();
-    delete dialog;
+        QMessageBox::information(this, "Bolus Delivered", 
+            QString("Bolus of %1 units delivered successfully.\nRemaining insulin: %2 units")
+            .arg(bolusAmount)
+            .arg(insulinLevel));
+    }
 }
 
 void MainWindow::onRefillClicked()
@@ -320,7 +321,8 @@ void OptionsDialog::onProfilesClicked()
 }
 
 // Manual Bolus Dialog Implementation
-ManualBolusDialog::ManualBolusDialog(QWidget *parent) : QDialog(parent)
+ManualBolusDialog::ManualBolusDialog(QWidget *parent, const QString& profile) 
+    : QDialog(parent), activeProfile(profile)
 {
     setWindowTitle("Manual Bolus");
     setMinimumWidth(300);
@@ -361,13 +363,35 @@ void ManualBolusDialog::onCalculateClicked()
         return;
     }
 
-    // Simple bolus calculation (you would implement your actual calculation logic here)
-    float carbBolus = carbs / 10.0; // Example: 1 unit per 10g carbs
-    float correctionBolus = (bg > 7.0) ? (bg - 7.0) / 2.0 : 0; // Example: correct if BG > 7.0
-    calculatedBolus = carbBolus + correctionBolus;
-
-    bolusResultLabel->setText(QString("Calculated Bolus: %1 units").arg(calculatedBolus));
-    confirmButton->setEnabled(true);
+    // Load profile settings from profiles.json
+    QFile file("profiles.json");
+    if (file.open(QIODevice::ReadOnly)) {
+        QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+        QJsonArray profilesArray = doc.array();
+        
+        float icr = 10.0;  // Default values
+        float cf = 2.0;
+        float targetBG = 7.0;
+        
+        // Find the active profile settings
+        for (const QJsonValue &value : profilesArray) {
+            QJsonObject profileObj = value.toObject();
+            if (profileObj["name"].toString() == activeProfile) {
+                icr = profileObj["icr"].toDouble();
+                cf = profileObj["cf"].toDouble();
+                targetBG = profileObj["targetBG"].toDouble();
+                break;
+            }
+        }
+        
+        // Calculate bolus using profile settings
+        float carbBolus = carbs / icr;  // Use profile's ICR
+        float correctionBolus = (bg > targetBG) ? (bg - targetBG) / cf : 0;  // Use profile's CF and target BG
+        calculatedBolus = carbBolus + correctionBolus;
+        
+        bolusResultLabel->setText(QString("Calculated Bolus: %1 units").arg(calculatedBolus));
+        confirmButton->setEnabled(true);
+    }
 }
 
 void ManualBolusDialog::onConfirmClicked()
@@ -385,10 +409,11 @@ void ManualBolusDialog::onConfirmClicked()
 ProfilesDialog::ProfilesDialog(QWidget *parent) : QDialog(parent)
 {
     setWindowTitle("Profile Management");
-    setMinimumWidth(300);
+    setMinimumWidth(400);
     setStyleSheet("background-color: #333333; color: white;");
 
     setupUI();
+    loadProfiles();  // Load existing profiles
     refreshProfilesList();
 }
 
@@ -419,6 +444,53 @@ void ProfilesDialog::setupUI()
     QWidget *profilesContainer = new QWidget(this);
     profilesLayout = new QVBoxLayout(profilesContainer);
     mainLayout->addWidget(profilesContainer);
+    
+    // Action buttons container
+    QWidget *actionButtonsContainer = new QWidget(this);
+    QHBoxLayout *actionButtonsLayout = new QHBoxLayout(actionButtonsContainer);
+    actionButtonsLayout->setContentsMargins(0, 10, 0, 0);
+    
+    // Create action buttons
+    viewButton = new QPushButton("View Profile", this);
+    editButton = new QPushButton("Edit Profile", this);
+    deleteButton = new QPushButton("Delete Profile", this);
+    selectButton = new QPushButton("Select Profile", this);
+    
+    // Style action buttons
+    QString actionButtonStyle = 
+        "QPushButton {"
+        "  background-color: #444444;"
+        "  color: white;"
+        "  border: none;"
+        "  padding: 8px 15px;"
+        "  font-size: 14px;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #333333;"
+        "}";
+    
+    viewButton->setStyleSheet(actionButtonStyle.replace("color: white;", "color: #55cc55;"));
+    editButton->setStyleSheet(actionButtonStyle.replace("color: white;", "color: #F0B000;"));
+    deleteButton->setStyleSheet(actionButtonStyle.replace("color: white;", "color: #ff4444;"));
+    selectButton->setStyleSheet(actionButtonStyle.replace("color: white;", "color: #66aaff;"));
+    
+    // Add action buttons to layout
+    actionButtonsLayout->addWidget(viewButton);
+    actionButtonsLayout->addWidget(editButton);
+    actionButtonsLayout->addWidget(deleteButton);
+    actionButtonsLayout->addWidget(selectButton);
+    
+    // Add action buttons container to main layout
+    mainLayout->addWidget(actionButtonsContainer);
+    
+    // Connect action buttons
+    connect(viewButton, &QPushButton::clicked, this, &ProfilesDialog::onViewProfileClicked);
+    connect(editButton, &QPushButton::clicked, this, &ProfilesDialog::onEditProfileClicked);
+    connect(deleteButton, &QPushButton::clicked, this, &ProfilesDialog::onDeleteProfileClicked);
+    connect(selectButton, &QPushButton::clicked, this, &ProfilesDialog::onSelectProfileClicked);
+    
+    // Initially disable action buttons
+    updateActionButtons();
 }
 
 void ProfilesDialog::refreshProfilesList()
@@ -430,12 +502,11 @@ void ProfilesDialog::refreshProfilesList()
     }
     profileButtons.clear();
 
-
-    //preset profiles until we can save and store profiles
-    QStringList profiles = {"Morning", "Exercise", "Night"};
-    for (const QString &profile : profiles) {
-        QPushButton *button = new QPushButton(profile, this);
-        button->setStyleSheet(
+    // Create buttons for each profile
+    for (auto it = profiles.begin(); it != profiles.end(); ++it) {
+        const QString& name = it.key();
+        QPushButton* nameButton = new QPushButton(name, this);
+        nameButton->setStyleSheet(
             "QPushButton {"
             "  background-color: #444444;"
             "  color: white;"
@@ -447,18 +518,184 @@ void ProfilesDialog::refreshProfilesList()
             "QPushButton:pressed {"
             "  background-color: #333333;"
             "}"
+            "QPushButton:checked {"
+            "  background-color: #555555;"
+            "  border-left: 4px solid #F0B000;"
+            "}"
         );
-        connect(button, &QPushButton::clicked, this, [this, profile]() {
-            onProfileSelected(profile);
+        nameButton->setCheckable(true);
+        connect(nameButton, &QPushButton::clicked, this, [this, name]() {
+            onProfileSelected(name);
         });
-        profilesLayout->addWidget(button);
-        profileButtons.push_back(button);
+        
+        profilesLayout->addWidget(nameButton);
+        profileButtons.append(nameButton);
     }
+}
+
+void ProfilesDialog::onProfileSelected(const QString& name)
+{
+    // Uncheck all buttons
+    for (auto button : profileButtons) {
+        button->setChecked(false);
+    }
+    
+    // Check the selected button
+    for (auto button : profileButtons) {
+        if (button->text() == name) {
+            button->setChecked(true);
+            break;
+        }
+    }
+    
+    selectedProfile = name;
+    updateActionButtons();
+}
+
+void ProfilesDialog::onSelectProfileClicked()
+{
+    if (selectedProfile.isEmpty()) {
+        QMessageBox::warning(this, "No Profile Selected", 
+            "Please select a profile first by clicking on it.");
+        return;
+    }
+    
+    // Get the MainWindow instance
+    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
+    if (mainWindow) {
+        mainWindow->setActiveProfile(selectedProfile);
+        QMessageBox::information(this, "Profile Selected", 
+            QString("Profile '%1' has been selected.\nYou can now use the bolus button.").arg(selectedProfile));
+        accept();  // Close the dialog after selection
+    }
+}
+
+void ProfilesDialog::updateActionButtons()
+{
+    bool hasSelection = !selectedProfile.isEmpty();
+    viewButton->setEnabled(hasSelection);
+    editButton->setEnabled(hasSelection);
+    deleteButton->setEnabled(hasSelection);
+    selectButton->setEnabled(hasSelection);
+}
+
+void ProfilesDialog::onViewProfileClicked()
+{
+    if (!selectedProfile.isEmpty()) {
+        showProfileDetails(selectedProfile);
+    }
+}
+
+void ProfilesDialog::onEditProfileClicked()
+{
+    if (!selectedProfile.isEmpty()) {
+        editProfile(selectedProfile);
+    }
+}
+
+void ProfilesDialog::onDeleteProfileClicked()
+{
+    if (selectedProfile.isEmpty()) return;
+    
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "Delete Profile",
+        QString("Are you sure you want to delete profile '%1'?").arg(selectedProfile),
+        QMessageBox::Yes | QMessageBox::No);
+        
+    if (reply == QMessageBox::Yes) {
+        delete profiles[selectedProfile];
+        profiles.remove(selectedProfile);
+        selectedProfile.clear();
+        updateActionButtons();
+        saveProfiles();
+        refreshProfilesList();
+    }
+}
+
+void ProfilesDialog::showProfileDetails(const QString& name)
+{
+    if (!profiles.contains(name)) return;
+    
+    Profile* profile = profiles[name];
+    QString details = QString(
+        "Profile: %1\n\n"
+        "Basal Rate: %2 U/hr\n"
+        "Insulin-to-Carb Ratio: %3\n"
+        "Correction Factor: %4\n"
+        "Target BG: %5 mmol/L"
+    ).arg(name)
+     .arg(profile->getBasalRate())
+     .arg(profile->getICR())
+     .arg(profile->getCorrectionFactor())
+     .arg(profile->getTargetBG());
+    
+    QMessageBox::information(this, "Profile Details", details);
+}
+
+void ProfilesDialog::editProfile(const QString& name)
+{
+    if (!profiles.contains(name)) return;
+    
+    Profile* profile = profiles[name];
+    
+    QDialog editDialog(this);
+    editDialog.setWindowTitle("Edit Profile: " + name);
+    editDialog.setStyleSheet("background-color: #333333; color: white;");
+    
+    QFormLayout *form = new QFormLayout(&editDialog);
+    
+    // Create input fields with current values
+    QLineEdit *basalInput = new QLineEdit(QString::number(profile->getBasalRate()), &editDialog);
+    QLineEdit *icrInput = new QLineEdit(QString::number(profile->getICR()), &editDialog);
+    QLineEdit *cfInput = new QLineEdit(QString::number(profile->getCorrectionFactor()), &editDialog);
+    QLineEdit *targetBGInput = new QLineEdit(QString::number(profile->getTargetBG()), &editDialog);
+    
+    // Style input fields
+    QString inputStyle = "background-color: #444444; color: white; padding: 5px;";
+    basalInput->setStyleSheet(inputStyle);
+    icrInput->setStyleSheet(inputStyle);
+    cfInput->setStyleSheet(inputStyle);
+    targetBGInput->setStyleSheet(inputStyle);
+    
+    // Add fields to form
+    form->addRow("Basal Rate (U/hr):", basalInput);
+    form->addRow("Insulin-to-Carb Ratio:", icrInput);
+    form->addRow("Correction Factor:", cfInput);
+    form->addRow("Target BG (mmol/L):", targetBGInput);
+    
+    // Add save button
+    QPushButton *saveButton = new QPushButton("SAVE CHANGES", &editDialog);
+    saveButton->setStyleSheet(
+        "QPushButton {"
+        "  background-color: #55cc55;"
+        "  color: white;"
+        "  border: none;"
+        "  padding: 10px;"
+        "  font-size: 16px;"
+        "  font-weight: bold;"
+        "}"
+        "QPushButton:pressed {"
+        "  background-color: #44bb44;"
+        "}"
+    );
+    form->addRow(saveButton);
+    
+    connect(saveButton, &QPushButton::clicked, &editDialog, [&]() {
+        // Update profile values
+        profile->setBasalRate(basalInput->text().toFloat());
+        profile->setICR(icrInput->text().toFloat());
+        profile->setCorrectionFactor(cfInput->text().toFloat());
+        profile->setTargetBG(targetBGInput->text().toFloat());
+        
+        saveProfiles();
+        refreshProfilesList();
+        editDialog.accept();
+    });
+    
+    editDialog.exec();
 }
 
 void ProfilesDialog::onAddProfileClicked()
 {
-    // Create new profile dialog
     QDialog newProfileDialog(this);
     newProfileDialog.setWindowTitle("New Profile");
     newProfileDialog.setStyleSheet("background-color: #333333; color: white;");
@@ -514,7 +751,17 @@ void ProfilesDialog::onAddProfileClicked()
             return;
         }
         
-        // In a real app, save the profile here
+        // Create new profile
+        QString name = nameInput->text();
+        float basal = basalInput->text().toFloat();
+        float icr = icrInput->text().toFloat();
+        float cf = cfInput->text().toFloat();
+        float targetBG = targetBGInput->text().toFloat();
+        
+        Profile* newProfile = new Profile(name, basal, icr, cf, targetBG);
+        profiles[name] = newProfile;
+        
+        saveProfiles();
         refreshProfilesList();
         newProfileDialog.accept();
     });
@@ -522,13 +769,54 @@ void ProfilesDialog::onAddProfileClicked()
     newProfileDialog.exec();
 }
 
-void ProfilesDialog::onProfileSelected(const QString& name)
+void ProfilesDialog::saveProfiles()
 {
-    // Show confirmation
-    QMessageBox::information(this, "Profile Selected", 
-                           "Selected profile: " + name + "\nProfile parameters loaded.");
-    
-    // In a real app, this would actually load the profile parameters
-    accept();
+    QFile file("profiles.json");
+    if (file.open(QIODevice::WriteOnly)) {
+        QJsonArray profilesArray;
+        for (auto it = profiles.begin(); it != profiles.end(); ++it) {
+            Profile* profile = it.value();
+            QJsonObject profileObj;
+            profileObj["name"] = it.key();
+            profileObj["basalRate"] = profile->getBasalRate();
+            profileObj["icr"] = profile->getICR();
+            profileObj["cf"] = profile->getCorrectionFactor();
+            profileObj["targetBG"] = profile->getTargetBG();
+            profilesArray.append(profileObj);
+        }
+        
+        QJsonDocument doc(profilesArray);
+        file.write(doc.toJson());
+        file.close();
+    }
+}
+
+void ProfilesDialog::loadProfiles()
+{
+    QFile file("profiles.json");
+    if (file.open(QIODevice::ReadOnly)) {
+        QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+        QJsonArray profilesArray = doc.array();
+        
+        for (const QJsonValue &value : profilesArray) {
+            QJsonObject profileObj = value.toObject();
+            QString name = profileObj["name"].toString();
+            float basalRate = profileObj["basalRate"].toDouble();
+            float icr = profileObj["icr"].toDouble();
+            float cf = profileObj["cf"].toDouble();
+            float targetBG = profileObj["targetBG"].toDouble();
+            
+            Profile* profile = new Profile(name, basalRate, icr, cf, targetBG);
+            profiles[name] = profile;
+        }
+        file.close();
+    }
+}
+
+void MainWindow::setActiveProfile(const QString& profile)
+{
+    activeProfile = profile;
+    // Update the bolus button state
+    ui->bolusButton->setEnabled(!profile.isEmpty());
 }
 
