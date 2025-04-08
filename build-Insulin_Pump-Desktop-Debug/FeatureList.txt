@@ -1,0 +1,23 @@
+Working features:
+- Battery usage, battery recharge button, insulin progress bar, battery warnings
+- Insulin usage, insulin refill button, insulin progress bar, insulin warnings
+- Bolus button, bolus calculation and delivery
+- options button
+- manage profiles button
+- create profile button
+
+Necessary features for April 8:
+- Save profile button & creating profiles functionality
+
+Cosmetic features for April 8:
+- live date & time
+
+Features to mention we plan to add in video:
+-  chart functionality
+-  bolus over extended period
+- automatic bolus (*)
+
+
+* review automatic vs manual bolus, make sure our pump can do both if thats part of the requirement. I dont think our code can do auto right now. Since we’re using blood glucose ‘readings’ instead of manual entering, we may need to add a feature where the pump 
+will auto release insulin when BG levels are off target. it may be better to scrap ‘readings’ all together and add a manual input for BG. we need to explore how automatic bolus works and if it can even work in the same system as manual bolus. If it comes down to it, 
+we may need to remove one or the other.  
