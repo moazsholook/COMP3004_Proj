@@ -16,11 +16,25 @@ MainWindow::MainWindow(QWidget *parent)
     , glucoseAxisY(new QValueAxis())
     , profileLabel(new QLabel("No Active Profile", this))
     , battery(new Battery())
+    , timeLabel(new QLabel(this))
+    , dateLabel(new QLabel(this))
+    , clockTimer(new QTimer(this))
 {
     ui->setupUi(this);
     
     // Add profile label to status bar
     statusBar()->addPermanentWidget(profileLabel);
+    
+    // Add time and date labels to status bar
+    timeLabel->setStyleSheet("color: white; font-size: 14px; padding-right: 10px;");
+    dateLabel->setStyleSheet("color: white; font-size: 14px; padding-right: 10px;");
+    statusBar()->addWidget(timeLabel);
+    statusBar()->addWidget(dateLabel);
+    
+    // Initialize clock timer
+    connect(clockTimer, &QTimer::timeout, this, &MainWindow::updateDateTime);
+    clockTimer->start(1000); // Update every second
+    updateDateTime(); // Initial update
     
     // Set the application-wide stylesheet for better text visibility
     this->setStyleSheet(R"(
@@ -833,5 +847,16 @@ void MainWindow::setActiveProfile(const QString& profile)
     if (profileLabel) {
         profileLabel->setText(QString("Active Profile: %1").arg(profile));
     }
+}
+
+void MainWindow::updateDateTime()
+{
+    QDateTime current = QDateTime::currentDateTime();
+    
+    // Update time in 24-hour format
+    timeLabel->setText(current.toString("hh:mm:ss"));
+    
+    // Update date
+    dateLabel->setText(current.toString("yyyy-MM-dd"));
 }
 

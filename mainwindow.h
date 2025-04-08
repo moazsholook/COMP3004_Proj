@@ -128,9 +128,13 @@ private:
     QLabel *profileLabel;
     Battery *battery;
     QChartView *chartView;
+    QLabel *timeLabel;
+    QLabel *dateLabel;
+    QTimer *clockTimer;
     
     void setupGlucoseChart();
     void updateBatteryDisplay();
     void updateInsulinDisplay();
+    void updateDateTime();
 };
 #endif // MAINWINDOW_H
