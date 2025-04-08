@@ -10,10 +10,12 @@ CONFIG += c++11
 
 SOURCES += \
     main.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    Battery.cpp
 
 HEADERS += \
-    mainwindow.h
+    mainwindow.h \
+    Battery.h
 
 FORMS += \
     mainwindow.ui

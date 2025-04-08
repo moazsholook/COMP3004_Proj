@@ -40,16 +40,79 @@ MainWindow::MainWindow(QWidget *parent)
         }
     )");
     
+    // Initialize battery
+    battery = new Battery();
+    updateBatteryDisplay();
+    
+    // Set up battery drain timer (drain 1% every 5 seconds)
+    batteryTimer = new QTimer(this);
+    connect(batteryTimer, &QTimer::timeout, this, &MainWindow::updateBatteryLevel);
+    batteryTimer->start(5000); // 5 seconds
+    
     setupGlucoseChart();
     
     // Connect the buttons
     connect(ui->optionsButton, &QPushButton::clicked, this, &MainWindow::onOptionsClicked);
     connect(ui->bolusButton, &QPushButton::clicked, this, &MainWindow::onBolusClicked);
+    connect(ui->rechargeButton, &QPushButton::clicked, this, &MainWindow::onRechargeClicked);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete battery;
+}
+
+void MainWindow::updateBatteryLevel()
+{
+    if (battery->getLevel() > 0) {
+        battery->drain(1); // Drain 1% every 5 seconds
+        updateBatteryDisplay();
+        
+        // Show different warning messages based on battery level
+        if (battery->getLevel() == 50) {
+            QMessageBox::warning(this, "Battery Warning", 
+                "Battery is at 50%. Consider charging soon.");
+        }
+        else if (battery->getLevel() == 10) {
+            QMessageBox::warning(this, "Low Battery Warning", 
+                "Battery is critically low at 10%! Please charge the device immediately.");
+        }
+        else if (battery->getLevel() <= 5) {
+            QMessageBox::critical(this, "Critical Battery Warning", 
+                "Battery is extremely low! The pump will stop soon if not charged.");
+        }
+    } else {
+        batteryTimer->stop();
+        QMessageBox::critical(this, "Battery Dead", "The pump has stopped due to dead battery!");
+    }
+}
+
+void MainWindow::updateBatteryDisplay()
+{
+    ui->batteryLabel->setText(QString("Battery: %1%").arg(battery->getLevel()));
+    
+    // Update battery color based on level
+    QString color;
+    if (battery->getLevel() > 50) {
+        color = "#00ff00"; // Green
+    } else if (battery->getLevel() > 10) {
+        color = "#ffff00"; // Yellow
+    } else {
+        color = "#ff0000"; // Red
+    }
+    ui->batteryLabel->setStyleSheet(QString("color: %1; font-weight: bold;").arg(color));
+}
+
+void MainWindow::onRechargeClicked()
+{
+    if (battery->getLevel() < 100) {
+        battery->charge();
+        updateBatteryDisplay();
+        QMessageBox::information(this, "Battery Charged", "Battery has been charged to 100%");
+    } else {
+        QMessageBox::information(this, "Battery Full", "Battery is already at 100%");
+    }
 }
 
 void MainWindow::setupGlucoseChart()

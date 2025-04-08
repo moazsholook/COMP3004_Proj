@@ -15,6 +15,10 @@ public:
     // Getters and setters
     int getLevel() const { return level; }
     void setLevel(int newLevel) { level = newLevel; }
+    
+    // Battery management functions
+    void drain(int amount);
+    void refill();
 };
 
 #endif // BATTERY_H 

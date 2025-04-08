@@ -13,6 +13,8 @@
 #include <QLineEdit>
 #include <QFormLayout>
 #include <QMessageBox>
+#include <QTimer>
+#include "Battery.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -59,13 +61,18 @@ public:
 private slots:
     void onOptionsClicked();
     void onBolusClicked();
+    void onRechargeClicked();
+    void updateBatteryLevel();
 
 private:
     Ui::MainWindow *ui;
     QChart *glucoseChart;
     QLineSeries *glucoseSeries;
     QChartView *chartView;
+    QTimer *batteryTimer;
+    Battery *battery;
     
     void setupGlucoseChart();
+    void updateBatteryDisplay();
 };
 #endif // MAINWINDOW_H
