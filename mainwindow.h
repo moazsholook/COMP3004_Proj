@@ -38,9 +38,15 @@ class ManualBolusDialog : public QDialog {
     Q_OBJECT
 public:
     explicit ManualBolusDialog(QWidget *parent = nullptr);
+    float getCalculatedBolus() const { return calculatedBolus; }
+
+signals:
+    void bolusConfirmed(float amount);
+
 private slots:
     void onCalculateClicked();
     void onConfirmClicked();
+
 private:
     QLineEdit *bgInput;
     QLineEdit *carbsInput;
@@ -92,8 +98,10 @@ private:
     QChartView *chartView;
     QTimer *batteryTimer;
     Battery *battery;
+    float insulinLevel = 300.0; // Maximum insulin level (300 units)
     
     void setupGlucoseChart();
     void updateBatteryDisplay();
+    void updateInsulinDisplay();
 };
 #endif // MAINWINDOW_H

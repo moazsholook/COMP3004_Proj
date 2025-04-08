@@ -4,6 +4,7 @@
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
+    , insulinLevel(300.0)  // Initialize with full cartridge
 {
     ui->setupUi(this);
     
@@ -50,6 +51,7 @@ MainWindow::MainWindow(QWidget *parent)
     batteryTimer->start(5000); // 5 seconds
     
     setupGlucoseChart();
+    updateInsulinDisplay();  // Initial display update
     
     // Connect the buttons
     connect(ui->optionsButton, &QPushButton::clicked, this, &MainWindow::onOptionsClicked);
@@ -182,8 +184,75 @@ void MainWindow::onOptionsClicked()
 
 void MainWindow::onBolusClicked()
 {
-    ManualBolusDialog dialog(this);
-    dialog.exec();
+    if (insulinLevel <= 0) {
+        QMessageBox::critical(this, "No Insulin",
+            "Insulin cartridge is empty! Please refill before delivering bolus.");
+        return;
+    }
+    
+    ManualBolusDialog *dialog = new ManualBolusDialog(this);
+    connect(dialog, &ManualBolusDialog::bolusConfirmed, this, [this](float amount) {
+        if (amount > insulinLevel) {
+            QMessageBox::critical(this, "Insufficient Insulin",
+                "Not enough insulin in cartridge for this bolus!");
+            return;
+        }
+        
+        // Deduct insulin and update display
+        insulinLevel -= amount;
+        updateInsulinDisplay();
+        
+        // Update IOB label
+        QString currentIOB = ui->iobLabel->text();
+        float iobValue = currentIOB.split(" ")[3].toFloat();
+        float newIOB = iobValue + amount;
+        ui->iobLabel->setText(QString("INSULIN ON BOARD    %1 u | 3:45 hrs").arg(newIOB));
+    });
+    
+    dialog->exec();
+    delete dialog;
+}
+
+void MainWindow::updateInsulinDisplay()
+{
+    // Update progress bar
+    int percentage = (insulinLevel / 300.0) * 100;
+    ui->insulinProgressBar->setValue(percentage);
+    
+    // Update label
+    ui->insulinLabel->setText(QString("%1 u").arg(insulinLevel, 0, 'f', 1));
+    
+    // Update color based on level
+    QString color;
+    if (insulinLevel > 100) {
+        color = "#66aaff"; // Blue
+    } else if (insulinLevel > 50) {
+        color = "#ffaa00"; // Orange
+    } else {
+        color = "#ff4444"; // Red
+    }
+    
+    // Update styles
+    ui->insulinLabel->setStyleSheet(QString("color: %1; font-size: 10px; font-weight: bold;").arg(color));
+    ui->insulinProgressBar->setStyleSheet(QString(
+        "QProgressBar {"
+        "    border: 1px solid #333333;"
+        "    border-radius: 0px;"
+        "    background-color: #333333;"
+        "    text-align: center;"
+        "}"
+        "QProgressBar::chunk {"
+        "    background-color: %1;"
+        "}").arg(color));
+    
+    // Show warning if insulin is low
+    if (insulinLevel <= 50 && insulinLevel > 20) {
+        QMessageBox::warning(this, "Low Insulin Warning",
+            "Insulin cartridge is getting low. Consider refilling soon.");
+    } else if (insulinLevel <= 20) {
+        QMessageBox::critical(this, "Critical Insulin Warning",
+            "Insulin cartridge is critically low! Please refill immediately.");
+    }
 }
 
 // Options Dialog Implementation
@@ -272,9 +341,14 @@ void ManualBolusDialog::onCalculateClicked()
 
 void ManualBolusDialog::onConfirmClicked()
 {
-    QMessageBox::information(this, "Bolus Confirmed", 
-        QString("Delivering %1 units of insulin").arg(calculatedBolus));
-    close();
+    QMessageBox::StandardButton reply = QMessageBox::question(this, "Confirm Bolus",
+        QString("Are you sure you want to deliver %1 units of insulin?").arg(calculatedBolus),
+        QMessageBox::Yes | QMessageBox::No);
+        
+    if (reply == QMessageBox::Yes) {
+        emit bolusConfirmed(calculatedBolus);
+        accept();
+    }
 }
 
 ProfilesDialog::ProfilesDialog(QWidget *parent) : QDialog(parent)
@@ -324,8 +398,9 @@ void ProfilesDialog::refreshProfilesList()
         delete button;
     }
     profileButtons.clear();
-    
-    // Add sample profiles (in a real app, these would come from storage)
+
+
+    //preset profiles until we can save and store profiles
     QStringList profiles = {"Morning", "Exercise", "Night"};
     for (const QString &profile : profiles) {
         QPushButton *button = new QPushButton(profile, this);
