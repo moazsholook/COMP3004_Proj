@@ -57,6 +57,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->optionsButton, &QPushButton::clicked, this, &MainWindow::onOptionsClicked);
     connect(ui->bolusButton, &QPushButton::clicked, this, &MainWindow::onBolusClicked);
     connect(ui->rechargeButton, &QPushButton::clicked, this, &MainWindow::onRechargeClicked);
+    connect(ui->refillButton, &QPushButton::clicked, this, &MainWindow::onRefillClicked);
 }
 
 MainWindow::~MainWindow()
@@ -230,6 +231,19 @@ void MainWindow::onBolusClicked()
     delete dialog;
 }
 
+void MainWindow::onRefillClicked()
+{
+    if (insulinLevel < 300.0) {
+        insulinLevel = 300.0;  // Reset to full
+        updateInsulinDisplay();
+        QMessageBox::information(this, "Cartridge Refilled", 
+            "Insulin cartridge has been refilled to 300 units.");
+    } else {
+        QMessageBox::information(this, "Cartridge Full", 
+            "Insulin cartridge is already full (300 units).");
+    }
+}
+
 void MainWindow::updateInsulinDisplay()
 {
     // Update progress bar
@@ -241,9 +255,9 @@ void MainWindow::updateInsulinDisplay()
     
     // Update color based on level
     QString color;
-    if (insulinLevel > 100) {
+    if (insulinLevel > 150) {  // >50%
         color = "#66aaff"; // Blue
-    } else if (insulinLevel > 50) {
+    } else if (insulinLevel > 60) {  // >20%
         color = "#ffaa00"; // Orange
     } else {
         color = "#ff4444"; // Red
@@ -262,11 +276,11 @@ void MainWindow::updateInsulinDisplay()
         "    background-color: %1;"
         "}").arg(color));
     
-    // Show warning if insulin is low
-    if (insulinLevel <= 50 && insulinLevel > 20) {
+    // Show warnings at appropriate levels
+    if (insulinLevel <= 60 && insulinLevel > 30) {
         QMessageBox::warning(this, "Low Insulin Warning",
             "Insulin cartridge is getting low. Consider refilling soon.");
-    } else if (insulinLevel <= 20) {
+    } else if (insulinLevel <= 30) {
         QMessageBox::critical(this, "Critical Insulin Warning",
             "Insulin cartridge is critically low! Please refill immediately.");
     }

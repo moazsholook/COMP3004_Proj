@@ -89,6 +89,7 @@ private slots:
     void onOptionsClicked();
     void onBolusClicked();
     void onRechargeClicked();
+    void onRefillClicked();
     void updateBatteryLevel();
 
 private:
