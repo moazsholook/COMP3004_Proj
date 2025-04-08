@@ -76,13 +76,13 @@ void MainWindow::updateBatteryLevel()
             QMessageBox::warning(this, "Battery Warning", 
                 "Battery is at 50%. Consider charging soon.");
         }
-        else if (battery->getLevel() == 10) {
+        else if (battery->getLevel() == 20) {
             QMessageBox::warning(this, "Low Battery Warning", 
-                "Battery is critically low at 10%! Please charge the device immediately.");
+                "Battery is getting low at 20%! Please charge the device soon.");
         }
-        else if (battery->getLevel() <= 5) {
+        else if (battery->getLevel() <= 10) {
             QMessageBox::critical(this, "Critical Battery Warning", 
-                "Battery is extremely low! The pump will stop soon if not charged.");
+                "Battery is critically low! The pump will stop soon if not charged.");
         }
     } else {
         batteryTimer->stop();
@@ -92,18 +92,34 @@ void MainWindow::updateBatteryLevel()
 
 void MainWindow::updateBatteryDisplay()
 {
-    ui->batteryLabel->setText(QString("Battery: %1%").arg(battery->getLevel()));
+    // Update progress bar
+    ui->batteryProgressBar->setValue(battery->getLevel());
     
-    // Update battery color based on level
+    // Update label
+    ui->batteryLabel->setText(QString("%1%").arg(battery->getLevel()));
+    
+    // Update color based on level
     QString color;
     if (battery->getLevel() > 50) {
-        color = "#00ff00"; // Green
-    } else if (battery->getLevel() > 10) {
-        color = "#ffff00"; // Yellow
+        color = "#55cc55"; // Green
+    } else if (battery->getLevel() > 20) {
+        color = "#ffaa00"; // Orange
     } else {
-        color = "#ff0000"; // Red
+        color = "#ff4444"; // Red
     }
-    ui->batteryLabel->setStyleSheet(QString("color: %1; font-weight: bold;").arg(color));
+    
+    // Update styles
+    ui->batteryLabel->setStyleSheet(QString("color: %1; font-size: 10px; font-weight: bold;").arg(color));
+    ui->batteryProgressBar->setStyleSheet(QString(
+        "QProgressBar {"
+        "    border: 1px solid #333333;"
+        "    border-radius: 0px;"
+        "    background-color: #333333;"
+        "    text-align: center;"
+        "}"
+        "QProgressBar::chunk {"
+        "    background-color: %1;"
+        "}").arg(color));
 }
 
 void MainWindow::onRechargeClicked()
@@ -111,6 +127,7 @@ void MainWindow::onRechargeClicked()
     if (battery->getLevel() < 100) {
         battery->charge();
         updateBatteryDisplay();
+        batteryTimer->start(); // Restart the timer if it was stopped
         QMessageBox::information(this, "Battery Charged", "Battery has been charged to 100%");
     } else {
         QMessageBox::information(this, "Battery Full", "Battery is already at 100%");
