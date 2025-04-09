@@ -21,4 +21,4 @@ public:
     void refill();
 };
 
-#endif // BATTERY_H 
+#endif 

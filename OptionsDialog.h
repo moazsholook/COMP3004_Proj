@@ -25,4 +25,4 @@ private:
     QPushButton *profilesButton;
 };
 
-#endif // OPTIONSDIALOG_H 
+#endif 
