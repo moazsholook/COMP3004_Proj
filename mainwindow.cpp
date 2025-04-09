@@ -180,6 +180,13 @@ void MainWindow::updateBatteryDisplay()
         "}").arg(color));
 }
 
+/**
+ * This function handles the recharge button click event. It checks if the battery level is below
+ * 100% and if so, charges it to full capacity. The battery display is updated to reflect the
+ * new charge level, and the battery timer is restarted if it was stopped.
+ * 
+ * If the battery is already at 100%, it shows a message indicating that no charging is needed.
+ */
 void MainWindow::onRechargeClicked()
 {
     if (battery->getLevel() < 100) {
@@ -192,11 +199,22 @@ void MainWindow::onRechargeClicked()
     }
 }
 
+/**
+ * This function sets up the glucose chart visualization. It creates a line series to display
+ * glucose data points over time, configures the chart appearance with a dark theme, and sets up
+ * the axes with appropriate ranges and labels. The chart is then added to the CGM graph frame
+ * in the main window.
+ * 
+ * The chart uses a QLineSeries to plot glucose values, with time on the x-axis and glucose
+ * concentration in mmol/L on the y-axis. The axes are customized with white labels and titles
+ * for better visibility against the dark background.
+ */
 void MainWindow::setupGlucoseChart()
 {
     // Create series for glucose data
     glucoseSeries = new QLineSeries();
     
+    // Add initial data points to show a sample trend
     glucoseSeries->append(0, 5.5);
     glucoseSeries->append(30, 6.2);
     glucoseSeries->append(60, 7.0);
@@ -214,7 +232,7 @@ void MainWindow::setupGlucoseChart()
     glucoseChart->setBackgroundBrush(QBrush(QColor("#333333")));
     glucoseChart->setTitleBrush(QBrush(Qt::white));
     
-    // Create axes
+    // Create and configure x-axis (time)
     QValueAxis *axisX = new QValueAxis;
     axisX->setRange(0, 180);
     axisX->setLabelFormat("%d");
@@ -222,6 +240,7 @@ void MainWindow::setupGlucoseChart()
     axisX->setLabelsColor(Qt::white);
     axisX->setTitleBrush(QBrush(Qt::white));
     
+    // Create and configure y-axis (glucose)
     QValueAxis *axisY = new QValueAxis;
     axisY->setRange(2, 22);  // Range from 2 to 22 mmol/L
     axisY->setLabelFormat("%.1f");
@@ -229,12 +248,13 @@ void MainWindow::setupGlucoseChart()
     axisY->setLabelsColor(Qt::white);
     axisY->setTitleBrush(QBrush(Qt::white));
     
+    // Add axes to chart and attach series
     glucoseChart->addAxis(axisX, Qt::AlignBottom);
     glucoseChart->addAxis(axisY, Qt::AlignLeft);
     glucoseSeries->attachAxis(axisX);
     glucoseSeries->attachAxis(axisY);
     
-    // Set up the chart view
+    // Set up the chart view with antialiasing for smooth rendering
     chartView = new QChartView(glucoseChart);
     chartView->setRenderHint(QPainter::Antialiasing);
     
@@ -249,6 +269,14 @@ void MainWindow::setupGlucoseChart()
     ui->cgmGraphFrame->setLayout(newLayout);
 }
 
+/**
+ * This function handles the options button click event. It creates and shows the options dialog,
+ * which allows the user to access various pump settings and features. The dialog is modal,
+ * meaning it blocks interaction with the main window until closed.
+ * 
+ * When the options dialog is closed, it triggers an update of the profiles to ensure any changes
+ * made in the options menu are reflected in the main window.
+ */
 void MainWindow::onOptionsClicked()
 {
     OptionsDialog dialog(this);
@@ -319,6 +347,13 @@ void MainWindow::onBolusClicked()
     }
 }
 
+/**
+ * This function handles the refill button click event. It checks if the insulin level is below
+ * the maximum capacity (300 units) and if so, refills it to full capacity. The insulin display
+ * is updated to reflect the new level.
+ * 
+ * If the insulin cartridge is already full, it shows a message indicating that no refill is needed.
+ */
 void MainWindow::onRefillClicked()
 {
     if (insulinLevel < 300.0) {
@@ -904,6 +939,14 @@ void ProfilesDialog::loadProfiles()
     }
 }
 
+/**
+ * This function sets the active profile for the pump. It updates the internal activeProfile
+ * variable and the UI to reflect the selected profile. The bolus button is enabled only if
+ * a profile is selected, and the profile label in the status bar is updated to show the
+ * currently active profile.
+ * 
+ * @param profile The name of the profile to set as active
+ */
 void MainWindow::setActiveProfile(const QString& profile)
 {
     activeProfile = profile;
