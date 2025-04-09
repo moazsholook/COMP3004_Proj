@@ -1,9 +1,16 @@
 [
     {
-        "basalRate": 9,
-        "cf": 9,
-        "icr": 9,
-        "name": "mo",
-        "targetBG": 9
+        "basalRate": 20,
+        "cf": 20,
+        "icr": 20,
+        "name": "afternoon",
+        "targetBG": 20
+    },
+    {
+        "basalRate": 10,
+        "cf": 10,
+        "icr": 10,
+        "name": "morning",
+        "targetBG": 10
     }
 ]
