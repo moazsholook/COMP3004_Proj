@@ -10,9 +10,7 @@ BolusPlan::BolusPlan(float carbBolus, float correctionBolus, float immediateDose
 }
 
 void BolusPlan::recalculate(float bg, float carbs, float iob, float icr) {
-    // Implementation would include complex calculations based on
-    // current blood glucose, carbs, and insulin on board
-    // This is a placeholder implementation
+
     carbBolus = carbs / icr;  // Calculate using insulin-to-carb ratio
     correctionBolus = (bg - 100) / 50.0f;  // Assuming 50mg/dL per unit
     totalBolus = carbBolus + correctionBolus - iob;

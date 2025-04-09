@@ -31,7 +31,6 @@ void InsulinPump::lock() {
 }
 
 bool InsulinPump::unlock(const std::string& pin) {
-    // In a real implementation, this would verify the PIN
     if (pin == "1234") {  // Placeholder PIN
         locked = false;
         systemLog->log("Pump unlocked");

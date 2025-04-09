@@ -33,7 +33,7 @@ ManualBolusDialog::ManualBolusDialog(QWidget *parent, Profile* profile)
     connect(calculateButton, &QPushButton::clicked, this, &ManualBolusDialog::onCalculateClicked);
     connect(confirmButton, &QPushButton::clicked, this, &ManualBolusDialog::onConfirmClicked);
     
-    // Initially disable confirm button until calculation is done
+    
     confirmButton->setEnabled(false);
 }
 

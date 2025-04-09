@@ -29,4 +29,4 @@ private:
     Profile* activeProfile;
 };
 
-#endif // MANUALBOLUSDIALOG_H 
+#endif 

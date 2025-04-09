@@ -9,7 +9,7 @@ class Profile {
 private:
     std::string name;
     float basalRate;
-    float icr;  // Insulin to Carb Ratio
+    float icr;  
     float correctionFactor;
     float targetBG;
 
@@ -32,4 +32,4 @@ public:
     void setTargetBG(float bg) { targetBG = bg; }
 };
 
-#endif // PROFILE_H 
+#endif 

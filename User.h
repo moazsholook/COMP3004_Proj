@@ -19,4 +19,4 @@ public:
     void refillCartridge();
 };
 
-#endif // USER_H 
+#endif 

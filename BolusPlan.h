@@ -28,4 +28,4 @@ public:
     int getDuration() const { return duration; }
 };
 
-#endif // BOLUSPLAN_H 
+#endif 

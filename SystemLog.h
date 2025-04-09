@@ -8,4 +8,4 @@ public:
     void log(const std::string& event);
 };
 
-#endif // SYSTEMLOG_H 
+#endif 

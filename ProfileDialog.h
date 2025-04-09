@@ -40,4 +40,4 @@ private:
     void showProfileDetails(Profile* profile);
 };
 
-#endif // PROFILEDIALOG_H 
+#endif 

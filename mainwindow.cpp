@@ -195,8 +195,6 @@ void MainWindow::setupGlucoseChart()
     // Create series for glucose data
     glucoseSeries = new QLineSeries();
     
-    // Add some sample data points (you can replace this with real data)
-    // X axis represents time in minutes, Y axis represents glucose level
     glucoseSeries->append(0, 5.5);
     glucoseSeries->append(30, 6.2);
     glucoseSeries->append(60, 7.0);
@@ -396,7 +394,7 @@ OptionsDialog::OptionsDialog(QWidget *parent) : QDialog(parent)
 void OptionsDialog::onStopInsulinClicked()
 {
     QMessageBox::warning(this, "Emergency Stop", "Insulin delivery has been stopped!");
-    // Here you would implement the actual stopping of insulin delivery
+    
     close();
 }
 
@@ -492,7 +490,7 @@ ProfilesDialog::ProfilesDialog(QWidget *parent) : QDialog(parent)
     setStyleSheet("background-color: #333333; color: white;");
 
     setupUI();
-    loadProfiles();  // Load existing profiles
+    loadProfiles();  
     refreshProfilesList();
 }
 

@@ -79,7 +79,7 @@ private:
     QVBoxLayout *profilesLayout;
     QPushButton *addProfileButton;
     QList<QPushButton*> profileButtons;
-    QMap<QString, Profile*> profiles;  // Store profiles by name
+    QMap<QString, Profile*> profiles;  
     
     // Action buttons
     QPushButton *viewButton;
@@ -107,7 +107,7 @@ public:
     void setActiveProfile(const QString& profile);
 
 public slots:
-    void updateProfiles();  // Add this slot to update profiles
+    void updateProfiles();  
 
 private slots:
     void onOptionsClicked();
@@ -141,4 +141,4 @@ private:
     void updateDateTime();
     void loadProfiles();
 };
-#endif // MAINWINDOW_H
+#endif 

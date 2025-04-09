@@ -17,4 +17,4 @@ public:
     void setFillLevel(int newLevel) { fillLevel = newLevel; }
 };
 
-#endif // CARTRIDGE_H 
+#endif 
