@@ -40,7 +40,7 @@ ManualBolusDialog::ManualBolusDialog(QWidget *parent, Profile* profile)
 void ManualBolusDialog::onCalculateClicked()
 {
     if (!activeProfile) {
-        QMessageBox::warning(this, "Error", "No active profile selected!");
+        QMessageBox::warning(this, "Error", "No profile selected!");
         return;
     }
 
@@ -53,10 +53,17 @@ void ManualBolusDialog::onCalculateClicked()
         return;
     }
 
-    // Use the profile's settings to calculate the bolus
-    calculatedBolus = activeProfile->calculateBolus(bg, carbs);
-
-    bolusResultLabel->setText(QString("Calculated Bolus: %1 units").arg(calculatedBolus, 0, 'f', 2));
+    // Use the active profile's settings
+    float icr = activeProfile->getICR();
+    float cf = activeProfile->getCorrectionFactor();
+    float targetBG = activeProfile->getTargetBG();
+    
+    // Calculate bolus using profile settings
+    float carbBolus = carbs / icr;  // Use profile's ICR
+    float correctionBolus = (bg > targetBG) ? (bg - targetBG) / cf : 0;  // Use profile's CF and target BG
+    calculatedBolus = carbBolus + correctionBolus;
+    
+    bolusResultLabel->setText(QString("Calculated Bolus: %1 units").arg(calculatedBolus));
     confirmButton->setEnabled(true);
 }
 

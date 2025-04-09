@@ -38,7 +38,7 @@ private:
 class ManualBolusDialog : public QDialog {
     Q_OBJECT
 public:
-    explicit ManualBolusDialog(QWidget *parent = nullptr, const QString& activeProfile = QString());
+    explicit ManualBolusDialog(QWidget *parent = nullptr, Profile* profile = nullptr);
     float getCalculatedBolus() const { return calculatedBolus; }
 
 signals:
@@ -49,13 +49,13 @@ private slots:
     void onConfirmClicked();
 
 private:
+    Profile* activeProfile;
+    float calculatedBolus;
     QLineEdit *bgInput;
     QLineEdit *carbsInput;
     QLabel *bolusResultLabel;
     QPushButton *calculateButton;
     QPushButton *confirmButton;
-    float calculatedBolus;
-    QString activeProfile;
 };
 
 // Profiles Dialog
@@ -104,7 +104,10 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
-    void setActiveProfile(const QString& profile);  // Just the declaration
+    void setActiveProfile(const QString& profile);
+
+public slots:
+    void updateProfiles();  // Add this slot to update profiles
 
 private slots:
     void onOptionsClicked();
@@ -136,5 +139,6 @@ private:
     void updateBatteryDisplay();
     void updateInsulinDisplay();
     void updateDateTime();
+    void loadProfiles();
 };
 #endif // MAINWINDOW_H

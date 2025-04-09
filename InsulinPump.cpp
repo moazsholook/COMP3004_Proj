@@ -62,7 +62,7 @@ BolusPlan* InsulinPump::createManualBolus(float bg, float carbs) {
     }
     
     BolusPlan* plan = new BolusPlan(0, 0, 0, 0, 0);
-    plan->recalculate(bg, carbs, iob);
+    plan->recalculate(bg, carbs, iob, activeProfile->getICR());
     return plan;
 }
 

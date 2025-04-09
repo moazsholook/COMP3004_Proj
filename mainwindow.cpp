@@ -6,7 +6,7 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
     , profiles()
     , activeProfile()
-    , insulinLevel(100.0f)  // Start with 100 units
+    , insulinLevel(300.0)
     , batteryLevel(100)
     , batteryTimer(new QTimer(this))
     , glucoseTimer(new QTimer(this))
@@ -22,6 +22,28 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     
+    // Load profiles from JSON file
+    loadProfiles();
+    
+    // Setup UI elements
+    setupGlucoseChart();
+    
+    // Create battery timer
+    connect(batteryTimer, &QTimer::timeout, this, &MainWindow::updateBatteryLevel);
+    batteryTimer->start(300000); // 5 minutes
+    
+    // Create glucose timer
+    connect(glucoseTimer, &QTimer::timeout, this, [this]() {
+        // Add random glucose value between 4.0 and 10.0
+        static QTime timeAxis;
+        timeAxis = timeAxis.addSecs(300); // 5 minutes
+        double randomValue = QRandomGenerator::global()->generateDouble() * (10.0 - 4.0) + 4.0;
+        glucoseSeries->append(timeAxis.msecsSinceStartOfDay(), randomValue);
+        if (glucoseSeries->count() > 288) // 24 hours of data
+            glucoseSeries->remove(0);
+    });
+    glucoseTimer->start(300000); // 5 minutes
+    
     // Add profile label to status bar
     statusBar()->addPermanentWidget(profileLabel);
     
@@ -30,11 +52,6 @@ MainWindow::MainWindow(QWidget *parent)
     dateLabel->setStyleSheet("color: white; font-size: 14px; padding-right: 10px;");
     statusBar()->addWidget(timeLabel);
     statusBar()->addWidget(dateLabel);
-    
-    // Initialize clock timer
-    connect(clockTimer, &QTimer::timeout, this, &MainWindow::updateDateTime);
-    clockTimer->start(1000); // Update every second
-    updateDateTime(); // Initial update
     
     // Set the application-wide stylesheet for better text visibility
     this->setStyleSheet(R"(
@@ -76,7 +93,6 @@ MainWindow::MainWindow(QWidget *parent)
     connect(batteryTimer, &QTimer::timeout, this, &MainWindow::updateBatteryLevel);
     batteryTimer->start(5000); // 5 seconds
     
-    setupGlucoseChart();
     updateInsulinDisplay();  // Initial display update
     
     // Connect the buttons
@@ -84,6 +100,19 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->bolusButton, &QPushButton::clicked, this, &MainWindow::onBolusClicked);
     connect(ui->rechargeButton, &QPushButton::clicked, this, &MainWindow::onRechargeClicked);
     connect(ui->refillButton, &QPushButton::clicked, this, &MainWindow::onRefillClicked);
+    
+    // Set up clock timer and initial time/date
+    connect(clockTimer, &QTimer::timeout, this, &MainWindow::updateDateTime);
+    clockTimer->start(1000); // Update every second
+    updateDateTime(); // Initial update
+
+    // Connect time and date labels to UI elements
+    ui->timeLabel->setText(timeLabel->text());
+    ui->dateLabel->setText(dateLabel->text());
+    connect(clockTimer, &QTimer::timeout, this, [this]() {
+        ui->timeLabel->setText(timeLabel->text());
+        ui->dateLabel->setText(dateLabel->text());
+    });
 }
 
 MainWindow::~MainWindow()
@@ -223,33 +252,69 @@ void MainWindow::setupGlucoseChart()
 void MainWindow::onOptionsClicked()
 {
     OptionsDialog dialog(this);
+    connect(&dialog, &OptionsDialog::finished, this, &MainWindow::updateProfiles);
     dialog.exec();
 }
 
 void MainWindow::onBolusClicked()
 {
-    ManualBolusDialog dialog(this, activeProfile);
-    if (dialog.exec() == QDialog::Accepted) {
-        // Get the calculated bolus amount from the dialog
-        float bolusAmount = dialog.getCalculatedBolus();
+    if (profiles.isEmpty()) {
+        QMessageBox::warning(this, "No Profiles", "No profiles available. Please create a profile first.");
+        return;
+    }
+
+    // Show profile selection dialog
+    QDialog profileSelectDialog(this);
+    profileSelectDialog.setWindowTitle("Select Profile for Bolus");
+    profileSelectDialog.setMinimumWidth(300);
+    
+    QVBoxLayout *layout = new QVBoxLayout(&profileSelectDialog);
+    QComboBox *profileCombo = new QComboBox(&profileSelectDialog);
+    QPushButton *okButton = new QPushButton("OK", &profileSelectDialog);
+    
+    // Load available profiles
+    for (auto it = profiles.begin(); it != profiles.end(); ++it) {
+        profileCombo->addItem(it.key());
+    }
+    
+    layout->addWidget(new QLabel("Select Profile:", &profileSelectDialog));
+    layout->addWidget(profileCombo);
+    layout->addWidget(okButton);
+    
+    connect(okButton, &QPushButton::clicked, &profileSelectDialog, &QDialog::accept);
+    
+    // Show profile selection dialog
+    if (profileSelectDialog.exec() == QDialog::Accepted) {
+        QString selectedProfileName = profileCombo->currentText();
+        Profile* selectedProfile = profiles[selectedProfileName];
         
-        // Check if we have enough insulin in both the display and cartridge
-        if (bolusAmount > insulinLevel) {
-            QMessageBox::warning(this, "Insufficient Insulin", 
-                "Not enough insulin remaining for this bolus!");
-            return;
+        if (selectedProfile) {
+            ManualBolusDialog dialog(this, selectedProfile);
+            if (dialog.exec() == QDialog::Accepted) {
+                // Get the calculated bolus amount from the dialog
+                float bolusAmount = dialog.getCalculatedBolus();
+                
+                // Check if we have enough insulin
+                if (bolusAmount > insulinLevel) {
+                    QMessageBox::warning(this, "Insufficient Insulin", 
+                        "Not enough insulin remaining for this bolus!");
+                    return;
+                }
+                
+                // Deduct the bolus amount
+                insulinLevel -= bolusAmount;
+                
+                // Update displays
+                updateInsulinDisplay();
+                
+                QMessageBox::information(this, "Bolus Delivered", 
+                    QString("Bolus of %1 units delivered successfully.\nRemaining insulin: %2 units")
+                    .arg(bolusAmount)
+                    .arg(insulinLevel));
+            }
+        } else {
+            QMessageBox::warning(this, "Error", "Selected profile not found!");
         }
-        
-        // Deduct the bolus amount from the display
-        insulinLevel -= bolusAmount;
-        
-        // Update displays
-        updateInsulinDisplay();
-        
-        QMessageBox::information(this, "Bolus Delivered", 
-            QString("Bolus of %1 units delivered successfully.\nRemaining insulin: %2 units")
-            .arg(bolusAmount)
-            .arg(insulinLevel));
     }
 }
 
@@ -342,8 +407,10 @@ void OptionsDialog::onProfilesClicked()
 }
 
 // Manual Bolus Dialog Implementation
-ManualBolusDialog::ManualBolusDialog(QWidget *parent, const QString& profile) 
-    : QDialog(parent), activeProfile(profile)
+ManualBolusDialog::ManualBolusDialog(QWidget *parent, Profile* profile)
+    : QDialog(parent)
+    , activeProfile(profile)
+    , calculatedBolus(0.0)
 {
     setWindowTitle("Manual Bolus");
     setMinimumWidth(300);
@@ -371,10 +438,18 @@ ManualBolusDialog::ManualBolusDialog(QWidget *parent, const QString& profile)
     
     connect(calculateButton, &QPushButton::clicked, this, &ManualBolusDialog::onCalculateClicked);
     connect(confirmButton, &QPushButton::clicked, this, &ManualBolusDialog::onConfirmClicked);
+    
+    // Initially disable confirm button until calculation is done
+    confirmButton->setEnabled(false);
 }
 
 void ManualBolusDialog::onCalculateClicked()
 {
+    if (!activeProfile) {
+        QMessageBox::warning(this, "Error", "No profile selected!");
+        return;
+    }
+
     bool bgOk, carbsOk;
     float bg = bgInput->text().toFloat(&bgOk);
     float carbs = carbsInput->text().toFloat(&carbsOk);
@@ -384,35 +459,18 @@ void ManualBolusDialog::onCalculateClicked()
         return;
     }
 
-    // Load profile settings from profiles.json
-    QFile file("profiles.json");
-    if (file.open(QIODevice::ReadOnly)) {
-        QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
-        QJsonArray profilesArray = doc.array();
-        
-        float icr = 10.0;  // Default values
-        float cf = 2.0;
-        float targetBG = 7.0;
-        
-        // Find the active profile settings
-        for (const QJsonValue &value : profilesArray) {
-            QJsonObject profileObj = value.toObject();
-            if (profileObj["name"].toString() == activeProfile) {
-                icr = profileObj["icr"].toDouble();
-                cf = profileObj["cf"].toDouble();
-                targetBG = profileObj["targetBG"].toDouble();
-                break;
-            }
-        }
-        
-        // Calculate bolus using profile settings
-        float carbBolus = carbs / icr;  // Use profile's ICR
-        float correctionBolus = (bg > targetBG) ? (bg - targetBG) / cf : 0;  // Use profile's CF and target BG
-        calculatedBolus = carbBolus + correctionBolus;
-        
-        bolusResultLabel->setText(QString("Calculated Bolus: %1 units").arg(calculatedBolus));
-        confirmButton->setEnabled(true);
-    }
+    // Use the active profile's settings
+    float icr = activeProfile->getICR();
+    float cf = activeProfile->getCorrectionFactor();
+    float targetBG = activeProfile->getTargetBG();
+    
+    // Calculate bolus using profile settings
+    float carbBolus = carbs / icr;  // Use profile's ICR
+    float correctionBolus = (bg > targetBG) ? (bg - targetBG) / cf : 0;  // Use profile's CF and target BG
+    calculatedBolus = carbBolus + correctionBolus;
+    
+    bolusResultLabel->setText(QString("Calculated Bolus: %1 units").arg(calculatedBolus));
+    confirmButton->setEnabled(true);
 }
 
 void ManualBolusDialog::onConfirmClicked()
@@ -813,6 +871,12 @@ void ProfilesDialog::saveProfiles()
         QJsonDocument doc(profilesArray);
         file.write(doc.toJson());
         file.close();
+
+        // Update MainWindow's profiles
+        MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
+        if (mainWindow) {
+            mainWindow->updateProfiles();
+        }
     }
 }
 
@@ -853,10 +917,42 @@ void MainWindow::updateDateTime()
 {
     QDateTime current = QDateTime::currentDateTime();
     
-    // Update time in 24-hour format
+    // Update time in 24-hour format with seconds
     timeLabel->setText(current.toString("hh:mm:ss"));
     
     // Update date
     dateLabel->setText(current.toString("yyyy-MM-dd"));
+}
+
+void MainWindow::loadProfiles()
+{
+    QFile file("profiles.json");
+    if (file.open(QIODevice::ReadOnly)) {
+        QJsonDocument doc = QJsonDocument::fromJson(file.readAll());
+        QJsonArray profilesArray = doc.array();
+        
+        for (const QJsonValue &value : profilesArray) {
+            QJsonObject profileObj = value.toObject();
+            QString name = profileObj["name"].toString();
+            float basalRate = profileObj["basalRate"].toDouble();
+            float icr = profileObj["icr"].toDouble();
+            float cf = profileObj["cf"].toDouble();
+            float targetBG = profileObj["targetBG"].toDouble();
+            
+            Profile* profile = new Profile(name, basalRate, icr, cf, targetBG);
+            profiles[name] = profile;
+        }
+        file.close();
+    }
+}
+
+void MainWindow::updateProfiles()
+{
+    // Clear existing profiles
+    qDeleteAll(profiles);
+    profiles.clear();
+
+    // Reload profiles from file
+    loadProfiles();
 }
 

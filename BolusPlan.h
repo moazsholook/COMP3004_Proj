@@ -16,7 +16,7 @@ public:
     BolusPlan(float carbBolus, float correctionBolus, float immediateDose, 
               float extendedDose, int duration);
     
-    void recalculate(float bg, float carbs, float iob);
+    void recalculate(float bg, float carbs, float iob, float icr);
     std::string getSummary() const;
     
     // Getters
