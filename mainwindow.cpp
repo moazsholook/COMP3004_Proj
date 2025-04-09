@@ -121,6 +121,7 @@ MainWindow::~MainWindow()
     delete battery;
 }
 
+
 void MainWindow::updateBatteryLevel()
 {
     if (battery->getLevel() > 0) {
@@ -145,6 +146,7 @@ void MainWindow::updateBatteryLevel()
         QMessageBox::critical(this, "Battery Dead", "The pump has stopped due to dead battery!");
     }
 }
+
 
 void MainWindow::updateBatteryDisplay()
 {
@@ -254,6 +256,7 @@ void MainWindow::onOptionsClicked()
     dialog.exec();
 }
 
+
 void MainWindow::onBolusClicked()
 {
     if (profiles.isEmpty()) {
@@ -328,6 +331,7 @@ void MainWindow::onRefillClicked()
             "Insulin cartridge is already full (300 units).");
     }
 }
+
 
 void MainWindow::updateInsulinDisplay()
 {
@@ -910,6 +914,7 @@ void MainWindow::setActiveProfile(const QString& profile)
         profileLabel->setText(QString("Active Profile: %1").arg(profile));
     }
 }
+
 
 void MainWindow::updateDateTime()
 {
