@@ -131,6 +131,7 @@ private slots:
     void onRechargeClicked();
     void onRefillClicked();
     void updateBatteryLevel();
+    void updateExtendedBolus();
 
 private:
     Ui::MainWindow *ui;
@@ -140,6 +141,7 @@ private:
     int batteryLevel;
     QTimer *batteryTimer;
     QTimer *glucoseTimer;
+    QTimer *extendedBolusTimer;
     QChart *glucoseChart;
     QLineSeries *glucoseSeries;
     QValueAxis *glucoseAxisX;
@@ -151,10 +153,18 @@ private:
     QLabel *dateLabel;
     QTimer *clockTimer;
     
+    // Extended bolus tracking
+    float remainingExtendedBolus;
+    float totalExtendedBolus;
+    int totalDurationMs;
+    int deliveryIntervalMs;
+    int intervalsRemaining;
+    
     void setupGlucoseChart();
     void updateBatteryDisplay();
     void updateInsulinDisplay();
     void updateDateTime();
     void loadProfiles();
+    float calculateIntervalDelivery(float totalBolus, int totalDurationMs, int intervalMs);
 };
 #endif 

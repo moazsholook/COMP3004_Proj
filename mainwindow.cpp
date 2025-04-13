@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
     , batteryLevel(100)
     , batteryTimer(new QTimer(this))
     , glucoseTimer(new QTimer(this))
+    , extendedBolusTimer(new QTimer(this))
     , glucoseChart(new QChart())
     , glucoseSeries(new QLineSeries())
     , glucoseAxisX(new QValueAxis())
@@ -19,6 +20,11 @@ MainWindow::MainWindow(QWidget *parent)
     , timeLabel(new QLabel(this))
     , dateLabel(new QLabel(this))
     , clockTimer(new QTimer(this))
+    , remainingExtendedBolus(0.0)
+    , totalExtendedBolus(0.0)
+    , totalDurationMs(0)
+    , deliveryIntervalMs(20000)  // Default 20-second intervals
+    , intervalsRemaining(0)
 {
     ui->setupUi(this);
     
@@ -43,6 +49,9 @@ MainWindow::MainWindow(QWidget *parent)
             glucoseSeries->remove(0);
     });
     glucoseTimer->start(300000); // 5 minutes
+    
+    // Setup extended bolus timer
+    connect(extendedBolusTimer, &QTimer::timeout, this, &MainWindow::updateExtendedBolus);
     
     // Add profile label to status bar
     statusBar()->addPermanentWidget(profileLabel);
@@ -329,26 +338,44 @@ void MainWindow::onBolusClicked()
                     return;
                 }
                 
-                // Deduct the total bolus amount
-                insulinLevel -= totalAmount;
-                
-                // Update displays
+                // Deliver immediate bolus
+                insulinLevel -= immediateAmount;
                 updateInsulinDisplay();
                 
-                QString message = QString("Bolus delivered successfully:\n"
-                                        "Immediate: %1 units\n").arg(immediateAmount);
-                
+                // If there's an extended bolus, start the timer
                 if (extendedAmount > 0) {
-                    message += QString("Extended: %1 units over %2 hours\n"
-                                     "Bolus Rate: %3 units/hour")
-                                     .arg(extendedAmount)
-                                     .arg(duration)
-                                     .arg(extendedAmount / duration);
+                    // Convert hours to milliseconds (1 hour = 60,000 ms)
+                    totalDurationMs = duration * 60000;
+                    remainingExtendedBolus = extendedAmount;
+                    totalExtendedBolus = extendedAmount;
+                    intervalsRemaining = totalDurationMs / deliveryIntervalMs;
+                    
+                    // Calculate and show the delivery details
+                    float intervalAmount = calculateIntervalDelivery(extendedAmount, totalDurationMs, deliveryIntervalMs);
+                    int intervals = totalDurationMs / deliveryIntervalMs;
+                    
+                    // Start the timer to deliver at fixed intervals
+                    extendedBolusTimer->start(deliveryIntervalMs);
+                    
+                    QMessageBox::information(this, "Extended Bolus Started", 
+                        QString("Extended bolus delivery started:\n"
+                               "Total Amount: %1 units\n"
+                               "Duration: %2 hours\n"
+                               "Delivery Interval: %3 seconds\n"
+                               "Amount per Interval: %4 units\n"
+                               "Total Intervals: %5")
+                        .arg(extendedAmount)
+                        .arg(duration)
+                        .arg(deliveryIntervalMs / 1000)
+                        .arg(intervalAmount)
+                        .arg(intervals));
+                } else {
+                    QMessageBox::information(this, "Bolus Delivered", 
+                        QString("Immediate bolus of %1 units delivered successfully.\n"
+                               "Remaining insulin: %2 units")
+                        .arg(immediateAmount)
+                        .arg(insulinLevel));
                 }
-                
-                message += QString("\nRemaining insulin: %1 units").arg(insulinLevel);
-                
-                QMessageBox::information(this, "Bolus Delivered", message);
             });
             
             dialog.exec();
@@ -1095,5 +1122,43 @@ void MainWindow::updateProfiles()
 
     // Reload profiles from file
     loadProfiles();
+}
+
+float MainWindow::calculateIntervalDelivery(float totalBolus, int totalDurationMs, int intervalMs)
+{
+    // Calculate how many intervals there will be
+    int totalIntervals = totalDurationMs / intervalMs;
+    
+    // Calculate the amount to deliver per interval
+    // This ensures the total amount is delivered by the end
+    return totalBolus / totalIntervals;
+}
+
+void MainWindow::updateExtendedBolus()
+{
+    if (remainingExtendedBolus > 0 && intervalsRemaining > 0) {
+        // Calculate the amount to deliver this interval
+        float deliveryAmount = calculateIntervalDelivery(totalExtendedBolus, totalDurationMs, deliveryIntervalMs);
+        
+        // Ensure we don't deliver more than remaining
+        if (deliveryAmount > remainingExtendedBolus) {
+            deliveryAmount = remainingExtendedBolus;
+        }
+        
+        // Update insulin level
+        insulinLevel -= deliveryAmount;
+        remainingExtendedBolus -= deliveryAmount;
+        intervalsRemaining--;
+        
+        // Update display
+        updateInsulinDisplay();
+        
+        // If extended bolus is complete, stop the timer
+        if (remainingExtendedBolus <= 0 || intervalsRemaining <= 0) {
+            extendedBolusTimer->stop();
+            QMessageBox::information(this, "Extended Bolus Complete", 
+                "Extended bolus delivery has been completed.");
+        }
+    }
 }
 
