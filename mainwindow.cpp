@@ -460,7 +460,8 @@ ManualBolusDialog::ManualBolusDialog(QWidget *parent, Profile* profile)
     , activeProfile(profile)
     , calculatedBolus(0.0)
     , extendedBolus(0.0)
-    , duration(2)  // Default 2 hours
+    , duration(3)  // Default 3 hours
+    , immediatePercentage(60)  // Default 60%
 {
     setWindowTitle("Manual Bolus");
     setMinimumWidth(300);
@@ -476,9 +477,17 @@ ManualBolusDialog::ManualBolusDialog(QWidget *parent, Profile* profile)
     carbsInput = new QLineEdit(this);
     extendedBolusCheck = new QCheckBox("Use Extended Bolus", this);
     extendedBolusCheck->setStyleSheet("color: white;");
+    
+    // Add immediate percentage input
+    immediatePercentageInput = new QSpinBox(this);
+    immediatePercentageInput->setRange(0, 100);
+    immediatePercentageInput->setValue(60);
+    immediatePercentageInput->setSuffix("%");
+    
     durationInput = new QSpinBox(this);
     durationInput->setRange(1, 8);  // 1-8 hours
-    durationInput->setValue(2);
+    durationInput->setValue(3);
+    
     bolusResultLabel = new QLabel("Calculated Bolus: 0.0 units", this);
     extendedBolusLabel = new QLabel("Extended Bolus: 0.0 units", this);
     bolusPerHourLabel = new QLabel("Bolus Rate: 0.0 units/hour", this);
@@ -488,6 +497,7 @@ ManualBolusDialog::ManualBolusDialog(QWidget *parent, Profile* profile)
     formLayout->addRow("Blood Glucose (mmol/L):", bgInput);
     formLayout->addRow("Carbohydrates (g):", carbsInput);
     formLayout->addRow("", extendedBolusCheck);
+    formLayout->addRow("Immediate Percentage:", immediatePercentageInput);
     formLayout->addRow("Duration (hours):", durationInput);
     
     mainLayout->addLayout(formLayout);
@@ -501,10 +511,12 @@ ManualBolusDialog::ManualBolusDialog(QWidget *parent, Profile* profile)
     connect(confirmButton, &QPushButton::clicked, this, &ManualBolusDialog::onConfirmClicked);
     connect(extendedBolusCheck, &QCheckBox::toggled, this, &ManualBolusDialog::onExtendedBolusToggled);
     connect(durationInput, QOverload<int>::of(&QSpinBox::valueChanged), this, &ManualBolusDialog::onDurationChanged);
+    connect(immediatePercentageInput, QOverload<int>::of(&QSpinBox::valueChanged), this, &ManualBolusDialog::onImmediatePercentageChanged);
     
     // Initially disable confirm button until calculation is done
     confirmButton->setEnabled(false);
     durationInput->setEnabled(false);
+    immediatePercentageInput->setEnabled(false);
 }
 
 void ManualBolusDialog::onCalculateClicked()
@@ -530,15 +542,15 @@ void ManualBolusDialog::onCalculateClicked()
     // Calculate total bolus using profile settings
     float carbBolus = carbs / icr;
     float correctionBolus = (bg > targetBG) ? (bg - targetBG) / cf : 0;
-    calculatedBolus = carbBolus + correctionBolus;
+    float totalBolus = carbBolus + correctionBolus;
     
-    // If extended bolus is enabled, split the bolus
+    // If extended bolus is enabled, split the bolus according to percentage
     if (extendedBolusCheck->isChecked()) {
-        // Default split: 50% immediate, 50% extended
-        float immediateDose = calculatedBolus * 0.5f;
-        extendedBolus = calculatedBolus - immediateDose;
-        calculatedBolus = immediateDose;
+        float immediatePercent = immediatePercentage / 100.0f;
+        calculatedBolus = totalBolus * immediatePercent;
+        extendedBolus = totalBolus - calculatedBolus;
     } else {
+        calculatedBolus = totalBolus;
         extendedBolus = 0.0f;
     }
     
@@ -571,12 +583,19 @@ void ManualBolusDialog::onConfirmClicked()
 void ManualBolusDialog::onExtendedBolusToggled(bool checked)
 {
     durationInput->setEnabled(checked);
+    immediatePercentageInput->setEnabled(checked);
     updateExtendedBolusDisplay();
 }
 
 void ManualBolusDialog::onDurationChanged(int value)
 {
     duration = value;
+    updateExtendedBolusDisplay();
+}
+
+void ManualBolusDialog::onImmediatePercentageChanged(int value)
+{
+    immediatePercentage = value;
     updateExtendedBolusDisplay();
 }
 

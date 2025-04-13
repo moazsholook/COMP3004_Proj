@@ -53,16 +53,19 @@ private slots:
     void onConfirmClicked();
     void onExtendedBolusToggled(bool checked);
     void onDurationChanged(int value);
+    void onImmediatePercentageChanged(int value);
 
 private:
     Profile* activeProfile;
     float calculatedBolus;
     float extendedBolus;
     int duration;
+    int immediatePercentage;
     QLineEdit *bgInput;
     QLineEdit *carbsInput;
     QCheckBox *extendedBolusCheck;
     QSpinBox *durationInput;
+    QSpinBox *immediatePercentageInput;
     QLabel *bolusResultLabel;
     QLabel *extendedBolusLabel;
     QLabel *bolusPerHourLabel;
