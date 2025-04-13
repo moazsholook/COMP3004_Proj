@@ -319,28 +319,39 @@ void MainWindow::onBolusClicked()
         
         if (selectedProfile) {
             ManualBolusDialog dialog(this, selectedProfile);
-            if (dialog.exec() == QDialog::Accepted) {
-                // Get the calculated bolus amount from the dialog
-                float bolusAmount = dialog.getCalculatedBolus();
+            connect(&dialog, &ManualBolusDialog::bolusConfirmed, this, [this](float immediateAmount, float extendedAmount, int duration) {
+                float totalAmount = immediateAmount + extendedAmount;
                 
                 // Check if we have enough insulin
-                if (bolusAmount > insulinLevel) {
+                if (totalAmount > insulinLevel) {
                     QMessageBox::warning(this, "Insufficient Insulin", 
                         "Not enough insulin remaining for this bolus!");
                     return;
                 }
                 
-                // Deduct the bolus amount
-                insulinLevel -= bolusAmount;
+                // Deduct the total bolus amount
+                insulinLevel -= totalAmount;
                 
                 // Update displays
                 updateInsulinDisplay();
                 
-                QMessageBox::information(this, "Bolus Delivered", 
-                    QString("Bolus of %1 units delivered successfully.\nRemaining insulin: %2 units")
-                    .arg(bolusAmount)
-                    .arg(insulinLevel));
-            }
+                QString message = QString("Bolus delivered successfully:\n"
+                                        "Immediate: %1 units\n").arg(immediateAmount);
+                
+                if (extendedAmount > 0) {
+                    message += QString("Extended: %1 units over %2 hours\n"
+                                     "Bolus Rate: %3 units/hour")
+                                     .arg(extendedAmount)
+                                     .arg(duration)
+                                     .arg(extendedAmount / duration);
+                }
+                
+                message += QString("\nRemaining insulin: %1 units").arg(insulinLevel);
+                
+                QMessageBox::information(this, "Bolus Delivered", message);
+            });
+            
+            dialog.exec();
         } else {
             QMessageBox::warning(this, "Error", "Selected profile not found!");
         }
@@ -448,6 +459,8 @@ ManualBolusDialog::ManualBolusDialog(QWidget *parent, Profile* profile)
     : QDialog(parent)
     , activeProfile(profile)
     , calculatedBolus(0.0)
+    , extendedBolus(0.0)
+    , duration(2)  // Default 2 hours
 {
     setWindowTitle("Manual Bolus");
     setMinimumWidth(300);
@@ -461,23 +474,37 @@ ManualBolusDialog::ManualBolusDialog(QWidget *parent, Profile* profile)
     
     bgInput = new QLineEdit(this);
     carbsInput = new QLineEdit(this);
+    extendedBolusCheck = new QCheckBox("Use Extended Bolus", this);
+    extendedBolusCheck->setStyleSheet("color: white;");
+    durationInput = new QSpinBox(this);
+    durationInput->setRange(1, 8);  // 1-8 hours
+    durationInput->setValue(2);
     bolusResultLabel = new QLabel("Calculated Bolus: 0.0 units", this);
+    extendedBolusLabel = new QLabel("Extended Bolus: 0.0 units", this);
+    bolusPerHourLabel = new QLabel("Bolus Rate: 0.0 units/hour", this);
     calculateButton = new QPushButton("Calculate", this);
     confirmButton = new QPushButton("Confirm", this);
     
     formLayout->addRow("Blood Glucose (mmol/L):", bgInput);
     formLayout->addRow("Carbohydrates (g):", carbsInput);
+    formLayout->addRow("", extendedBolusCheck);
+    formLayout->addRow("Duration (hours):", durationInput);
     
     mainLayout->addLayout(formLayout);
     mainLayout->addWidget(bolusResultLabel);
+    mainLayout->addWidget(extendedBolusLabel);
+    mainLayout->addWidget(bolusPerHourLabel);
     mainLayout->addWidget(calculateButton);
     mainLayout->addWidget(confirmButton);
     
     connect(calculateButton, &QPushButton::clicked, this, &ManualBolusDialog::onCalculateClicked);
     connect(confirmButton, &QPushButton::clicked, this, &ManualBolusDialog::onConfirmClicked);
+    connect(extendedBolusCheck, &QCheckBox::toggled, this, &ManualBolusDialog::onExtendedBolusToggled);
+    connect(durationInput, QOverload<int>::of(&QSpinBox::valueChanged), this, &ManualBolusDialog::onDurationChanged);
     
     // Initially disable confirm button until calculation is done
     confirmButton->setEnabled(false);
+    durationInput->setEnabled(false);
 }
 
 void ManualBolusDialog::onCalculateClicked()
@@ -496,29 +523,78 @@ void ManualBolusDialog::onCalculateClicked()
         return;
     }
 
-    // Use the active profile's settings
     float icr = activeProfile->getICR();
     float cf = activeProfile->getCorrectionFactor();
     float targetBG = activeProfile->getTargetBG();
     
-    // Calculate bolus using profile settings
-    float carbBolus = carbs / icr;  // Use profile's ICR
-    float correctionBolus = (bg > targetBG) ? (bg - targetBG) / cf : 0;  // Use profile's CF and target BG
+    // Calculate total bolus using profile settings
+    float carbBolus = carbs / icr;
+    float correctionBolus = (bg > targetBG) ? (bg - targetBG) / cf : 0;
     calculatedBolus = carbBolus + correctionBolus;
     
-    bolusResultLabel->setText(QString("Calculated Bolus: %1 units").arg(calculatedBolus));
+    // If extended bolus is enabled, split the bolus
+    if (extendedBolusCheck->isChecked()) {
+        // Default split: 50% immediate, 50% extended
+        float immediateDose = calculatedBolus * 0.5f;
+        extendedBolus = calculatedBolus - immediateDose;
+        calculatedBolus = immediateDose;
+    } else {
+        extendedBolus = 0.0f;
+    }
+    
+    updateExtendedBolusDisplay();
     confirmButton->setEnabled(true);
 }
 
 void ManualBolusDialog::onConfirmClicked()
 {
+    QString message = QString("Are you sure you want to deliver:\n"
+                            "Immediate Bolus: %1 units\n").arg(calculatedBolus);
+    
+    if (extendedBolusCheck->isChecked()) {
+        message += QString("Extended Bolus: %1 units over %2 hours\n"
+                         "Bolus Rate: %3 units/hour")
+                         .arg(extendedBolus)
+                         .arg(duration)
+                         .arg(extendedBolus / duration);
+    }
+    
     QMessageBox::StandardButton reply = QMessageBox::question(this, "Confirm Bolus",
-        QString("Are you sure you want to deliver %1 units of insulin?").arg(calculatedBolus),
-        QMessageBox::Yes | QMessageBox::No);
+        message, QMessageBox::Yes | QMessageBox::No);
         
     if (reply == QMessageBox::Yes) {
-        emit bolusConfirmed(calculatedBolus);
+        emit bolusConfirmed(calculatedBolus, extendedBolus, duration);
         accept();
+    }
+}
+
+void ManualBolusDialog::onExtendedBolusToggled(bool checked)
+{
+    durationInput->setEnabled(checked);
+    updateExtendedBolusDisplay();
+}
+
+void ManualBolusDialog::onDurationChanged(int value)
+{
+    duration = value;
+    updateExtendedBolusDisplay();
+}
+
+void ManualBolusDialog::updateExtendedBolusDisplay()
+{
+    bolusResultLabel->setText(QString("Immediate Bolus: %1 units").arg(calculatedBolus));
+    
+    if (extendedBolusCheck->isChecked()) {
+        extendedBolusLabel->setText(QString("Extended Bolus: %1 units over %2 hours")
+                                  .arg(extendedBolus)
+                                  .arg(duration));
+        bolusPerHourLabel->setText(QString("Bolus Rate: %1 units/hour")
+                                 .arg(extendedBolus / duration));
+        extendedBolusLabel->setVisible(true);
+        bolusPerHourLabel->setVisible(true);
+    } else {
+        extendedBolusLabel->setVisible(false);
+        bolusPerHourLabel->setVisible(false);
     }
 }
 

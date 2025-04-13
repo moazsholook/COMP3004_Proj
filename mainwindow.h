@@ -14,6 +14,8 @@
 #include <QFormLayout>
 #include <QMessageBox>
 #include <QTimer>
+#include <QCheckBox>
+#include <QSpinBox>
 #include "Battery.h"
 #include "Profile.h"
 
@@ -40,22 +42,33 @@ class ManualBolusDialog : public QDialog {
 public:
     explicit ManualBolusDialog(QWidget *parent = nullptr, Profile* profile = nullptr);
     float getCalculatedBolus() const { return calculatedBolus; }
+    float getExtendedBolus() const { return extendedBolus; }
+    int getDuration() const { return duration; }
 
 signals:
-    void bolusConfirmed(float amount);
+    void bolusConfirmed(float immediateAmount, float extendedAmount, int duration);
 
 private slots:
     void onCalculateClicked();
     void onConfirmClicked();
+    void onExtendedBolusToggled(bool checked);
+    void onDurationChanged(int value);
 
 private:
     Profile* activeProfile;
     float calculatedBolus;
+    float extendedBolus;
+    int duration;
     QLineEdit *bgInput;
     QLineEdit *carbsInput;
+    QCheckBox *extendedBolusCheck;
+    QSpinBox *durationInput;
     QLabel *bolusResultLabel;
+    QLabel *extendedBolusLabel;
+    QLabel *bolusPerHourLabel;
     QPushButton *calculateButton;
     QPushButton *confirmButton;
+    void updateExtendedBolusDisplay();
 };
 
 // Profiles Dialog
