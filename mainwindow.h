@@ -121,6 +121,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     void setActiveProfile(const QString& profile);
+    void setInsulinDeliveryStopped(bool stopped) { insulinDeliveryStopped = stopped; }
 
 public slots:
     void updateProfiles();  
@@ -139,6 +140,7 @@ private:
     QString activeProfile;
     float insulinLevel;
     int batteryLevel;
+    bool insulinDeliveryStopped;
     QTimer *batteryTimer;
     QTimer *glucoseTimer;
     QTimer *extendedBolusTimer;

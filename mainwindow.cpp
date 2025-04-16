@@ -8,6 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
     , activeProfile()
     , insulinLevel(300.0)
     , batteryLevel(100)
+    , insulinDeliveryStopped(false)  // Initialize to false
     , batteryTimer(new QTimer(this))
     , glucoseTimer(new QTimer(this))
     , extendedBolusTimer(new QTimer(this))
@@ -470,8 +471,11 @@ OptionsDialog::OptionsDialog(QWidget *parent) : QDialog(parent)
 
 void OptionsDialog::onStopInsulinClicked()
 {
-    QMessageBox::warning(this, "Emergency Stop", "Insulin delivery has been stopped!");
-    
+    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
+    if (mainWindow) {
+        mainWindow->setInsulinDeliveryStopped(true);
+        QMessageBox::warning(this, "Emergency Stop", "Insulin delivery has been stopped!");
+    }
     close();
 }
 
@@ -1136,6 +1140,10 @@ float MainWindow::calculateIntervalDelivery(float totalBolus, int totalDurationM
 
 void MainWindow::updateExtendedBolus()
 {
+    if (insulinDeliveryStopped) {
+        return;  // Don't deliver insulin if delivery is stopped
+    }
+
     if (remainingExtendedBolus > 0 && intervalsRemaining > 0) {
         // Calculate the amount to deliver this interval
         float deliveryAmount = calculateIntervalDelivery(totalExtendedBolus, totalDurationMs, deliveryIntervalMs);
