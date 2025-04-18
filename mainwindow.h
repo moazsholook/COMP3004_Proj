@@ -23,7 +23,6 @@ QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
 
-// Options Dialog
 class OptionsDialog : public QDialog {
     Q_OBJECT
 public:
@@ -31,12 +30,13 @@ public:
 private slots:
     void onStopInsulinClicked();
     void onProfilesClicked();
+    void onSleepClicked();
 private:
     QPushButton *stopInsulinButton;
     QPushButton *profilesButton;
+    QPushButton *sleepButton;
 };
 
-// Manual Bolus Dialog
 class ManualBolusDialog : public QDialog {
     Q_OBJECT
 public:
@@ -74,11 +74,8 @@ private:
     void updateExtendedBolusDisplay();
 };
 
-// Profiles Dialog
-class ProfilesDialog : public QDialog
-{
+class ProfilesDialog : public QDialog {
     Q_OBJECT
-
 public:
     explicit ProfilesDialog(QWidget *parent = nullptr);
 
@@ -95,15 +92,14 @@ private:
     QVBoxLayout *profilesLayout;
     QPushButton *addProfileButton;
     QList<QPushButton*> profileButtons;
-    QMap<QString, Profile*> profiles;  
-    
-    // Action buttons
+    QMap<QString, Profile*> profiles;
+
     QPushButton *viewButton;
     QPushButton *editButton;
     QPushButton *deleteButton;
     QPushButton *selectButton;
     QString selectedProfile;
-    
+
     void setupUI();
     void refreshProfilesList();
     void saveProfiles();
@@ -113,8 +109,7 @@ private:
     void updateActionButtons();
 };
 
-class MainWindow : public QMainWindow
-{
+class MainWindow : public QMainWindow {
     Q_OBJECT
 
 public:
@@ -122,9 +117,10 @@ public:
     ~MainWindow();
     void setActiveProfile(const QString& profile);
     void setInsulinDeliveryStopped(bool stopped) { insulinDeliveryStopped = stopped; }
+    void enterSleepMode();
 
 public slots:
-    void updateProfiles();  
+    void updateProfiles();
 
 private slots:
     void onOptionsClicked();
@@ -133,6 +129,7 @@ private slots:
     void onRefillClicked();
     void updateBatteryLevel();
     void updateExtendedBolus();
+    void onPowerButtonClicked();
 
 private:
     Ui::MainWindow *ui;
@@ -141,6 +138,8 @@ private:
     float insulinLevel;
     int batteryLevel;
     bool insulinDeliveryStopped;
+    bool isSleeping;
+    bool poweredOn;
     QTimer *batteryTimer;
     QTimer *glucoseTimer;
     QTimer *extendedBolusTimer;
@@ -154,14 +153,12 @@ private:
     QLabel *timeLabel;
     QLabel *dateLabel;
     QTimer *clockTimer;
-    
-    // Extended bolus tracking
     float remainingExtendedBolus;
     float totalExtendedBolus;
     int totalDurationMs;
     int deliveryIntervalMs;
     int intervalsRemaining;
-    
+
     void setupGlucoseChart();
     void updateBatteryDisplay();
     void updateInsulinDisplay();
@@ -169,4 +166,5 @@ private:
     void loadProfiles();
     float calculateIntervalDelivery(float totalBolus, int totalDurationMs, int intervalMs);
 };
-#endif 
+
+#endif

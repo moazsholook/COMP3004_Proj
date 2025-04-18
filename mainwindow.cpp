@@ -54,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
     // Setup extended bolus timer
     connect(extendedBolusTimer, &QTimer::timeout, this, &MainWindow::updateExtendedBolus);
     
+    
     // Add profile label to status bar
     statusBar()->addPermanentWidget(profileLabel);
     
@@ -110,6 +111,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->bolusButton, &QPushButton::clicked, this, &MainWindow::onBolusClicked);
     connect(ui->rechargeButton, &QPushButton::clicked, this, &MainWindow::onRechargeClicked);
     connect(ui->refillButton, &QPushButton::clicked, this, &MainWindow::onRefillClicked);
+    connect(ui->powerButton, &QPushButton::clicked, this, &MainWindow::onPowerButtonClicked);
+    // Inside your MainWindow constructor (after ui->setupUi(this);)
+
     
     // Set up clock timer and initial time/date
     connect(clockTimer, &QTimer::timeout, this, &MainWindow::updateDateTime);
@@ -123,6 +127,13 @@ MainWindow::MainWindow(QWidget *parent)
         ui->timeLabel->setText(timeLabel->text());
         ui->dateLabel->setText(dateLabel->text());
     });
+
+    //this->centralWidget()->setEnabled(false);  // Lock UI
+    ui->optionsButton->setEnabled(false);
+ui->bolusButton->setEnabled(false);
+ui->rechargeButton->setEnabled(false);
+ui->refillButton->setEnabled(false);
+    ui->powerButton->setEnabled(true); 
 }
 
 MainWindow::~MainWindow()
@@ -297,6 +308,11 @@ void MainWindow::onOptionsClicked()
 
 void MainWindow::onBolusClicked()
 {
+    if (!poweredOn) {
+        QMessageBox::warning(this, "Pump Off", "Please turn on the pump first.");
+        return;
+    }
+    
     if (profiles.isEmpty()) {
         QMessageBox::warning(this, "No Profiles", "No profiles available. Please create a profile first.");
         return;
@@ -461,13 +477,17 @@ OptionsDialog::OptionsDialog(QWidget *parent) : QDialog(parent)
     
     stopInsulinButton = new QPushButton("Stop Insulin Delivery", this);
     profilesButton = new QPushButton("Manage Profiles", this);
-    
+    sleepButton = new QPushButton("Sleep Mode", this);  // ✅ Add this
+
     layout->addWidget(stopInsulinButton);
     layout->addWidget(profilesButton);
-    
+    layout->addWidget(sleepButton);  // ✅ And this
+
     connect(stopInsulinButton, &QPushButton::clicked, this, &OptionsDialog::onStopInsulinClicked);
     connect(profilesButton, &QPushButton::clicked, this, &OptionsDialog::onProfilesClicked);
+    connect(sleepButton, &QPushButton::clicked, this, &OptionsDialog::onSleepClicked);  // ✅ Connect it
 }
+
 
 void OptionsDialog::onStopInsulinClicked()
 {
@@ -647,6 +667,17 @@ void ManualBolusDialog::updateExtendedBolusDisplay()
         bolusPerHourLabel->setVisible(false);
     }
 }
+
+void OptionsDialog::onSleepClicked()
+{
+    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
+    if (mainWindow) {
+        mainWindow->enterSleepMode();  // ✅ Call the real sleep function
+    }
+    close();
+}
+
+
 
 ProfilesDialog::ProfilesDialog(QWidget *parent) : QDialog(parent)
 {
@@ -1169,4 +1200,53 @@ void MainWindow::updateExtendedBolus()
         }
     }
 }
+
+void MainWindow::onPowerButtonClicked() {
+    if (!poweredOn) {
+        poweredOn = true;
+
+        // Enable full UI (initial power on)
+        ui->optionsButton->setEnabled(true);
+        ui->bolusButton->setEnabled(true);
+        ui->rechargeButton->setEnabled(true);
+        ui->refillButton->setEnabled(true);
+
+        QMessageBox::information(this, "Power On", "Pump has powered on and is ready for use.");
+        ui->powerButton->setText("Power");
+
+    } else if (isSleeping) {
+        isSleeping = false;
+
+        // Wake from sleep and re-enable buttons
+        ui->optionsButton->setEnabled(true);
+        ui->bolusButton->setEnabled(true);
+        ui->rechargeButton->setEnabled(true);
+        ui->refillButton->setEnabled(true);
+
+        QMessageBox::information(this, "Wake", "Pump has woken from sleep.");
+    }
+}
+
+
+
+
+
+
+
+void MainWindow::enterSleepMode() {
+    if (poweredOn && !isSleeping) {
+        isSleeping = true;
+
+        // Disable buttons except power
+        ui->optionsButton->setEnabled(false);
+        ui->bolusButton->setEnabled(false);
+        ui->rechargeButton->setEnabled(false);
+        ui->refillButton->setEnabled(false);
+
+        QMessageBox::information(this, "Sleep Mode", "The pump is now asleep. Press Power to wake.");
+    }
+}
+
+
+
 

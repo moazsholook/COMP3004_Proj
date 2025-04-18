@@ -806,6 +806,13 @@ QPushButton:pressed {
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="powerButton">
+           <property name="text">
+            <string>Power</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="bolusButton">
            <property name="minimumSize">
             <size>

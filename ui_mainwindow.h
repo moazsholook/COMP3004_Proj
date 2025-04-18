@@ -75,6 +75,7 @@ public:
     QLabel *iobLabel;
     QHBoxLayout *actionButtonsLayout;
     QPushButton *optionsButton;
+    QPushButton *powerButton;
     QPushButton *bolusButton;
 
     void setupUi(QMainWindow *MainWindow)
@@ -464,6 +465,11 @@ public:
 
         actionButtonsLayout->addWidget(optionsButton);
 
+        powerButton = new QPushButton(bottomFrame);
+        powerButton->setObjectName(QString::fromUtf8("powerButton"));
+
+        actionButtonsLayout->addWidget(powerButton);
+
         bolusButton = new QPushButton(bottomFrame);
         bolusButton->setObjectName(QString::fromUtf8("bolusButton"));
         bolusButton->setMinimumSize(QSize(0, 40));
@@ -522,6 +528,7 @@ public:
         tandemLogoButton->setText(QString());
         iobLabel->setText(QCoreApplication::translate("MainWindow", "INSULIN ON BOARD    2.5 u | 3:45 hrs", nullptr));
         optionsButton->setText(QCoreApplication::translate("MainWindow", "OPTIONS", nullptr));
+        powerButton->setText(QCoreApplication::translate("MainWindow", "Power", nullptr));
         bolusButton->setText(QCoreApplication::translate("MainWindow", "BOLUS", nullptr));
     } // retranslateUi
 
