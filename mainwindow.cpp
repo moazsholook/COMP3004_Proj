@@ -1211,11 +1211,17 @@ void MainWindow::onPowerButtonClicked() {
         ui->rechargeButton->setEnabled(true);
         ui->refillButton->setEnabled(true);
 
+        // Start battery drain timer
+        batteryTimer->start(5000); // 5 seconds
+
         QMessageBox::information(this, "Power On", "Pump has powered on and is ready for use.");
         ui->powerButton->setText("Power");
 
     } else if (isSleeping) {
         isSleeping = false;
+
+        // Resume battery drain timer
+        batteryTimer->start(5000); // 5 seconds
 
         // Wake from sleep and re-enable buttons
         ui->optionsButton->setEnabled(true);
@@ -1236,6 +1242,9 @@ void MainWindow::onPowerButtonClicked() {
 void MainWindow::enterSleepMode() {
     if (poweredOn && !isSleeping) {
         isSleeping = true;
+
+        // Stop battery drain timer
+        batteryTimer->stop();
 
         // Disable buttons except power
         ui->optionsButton->setEnabled(false);
