@@ -64,18 +64,16 @@ public:
     QLabel *glucoseValueLabel;
     QLabel *glucoseUnitLabel;
     QLabel *glucoseTrendLabel;
+    QPushButton *powerButton;
     QFrame *hoursFrame;
     QVBoxLayout *hoursFrameLayout;
     QLabel *hoursValueLabel;
     QLabel *hoursTextLabel;
-    QPushButton *tandemLogoButton;
-    QSpacerItem *rightSideSpacer;
     QFrame *bottomFrame;
     QVBoxLayout *bottomFrameLayout;
     QLabel *iobLabel;
     QHBoxLayout *actionButtonsLayout;
     QPushButton *optionsButton;
-    QPushButton *powerButton;
     QPushButton *bolusButton;
 
     void setupUi(QMainWindow *MainWindow)
@@ -365,6 +363,22 @@ public:
 
         rightSideLayout->addWidget(glucoseFrame);
 
+        powerButton = new QPushButton(mainContentFrame);
+        powerButton->setObjectName(QString::fromUtf8("powerButton"));
+        powerButton->setMinimumSize(QSize(100, 100));
+        powerButton->setStyleSheet(QString::fromUtf8("QPushButton {\n"
+"  background-color: #555555;\n"
+"  color: #FFFFFF;\n"
+"  border: none;\n"
+"  font-size: 16px;\n"
+"  font-weight: bold;\n"
+"}\n"
+"QPushButton:pressed {\n"
+"  background-color: #444444;\n"
+"}"));
+
+        rightSideLayout->addWidget(powerButton);
+
         hoursFrame = new QFrame(mainContentFrame);
         hoursFrame->setObjectName(QString::fromUtf8("hoursFrame"));
         hoursFrame->setMinimumSize(QSize(100, 60));
@@ -391,30 +405,6 @@ public:
 
 
         rightSideLayout->addWidget(hoursFrame);
-
-        tandemLogoButton = new QPushButton(mainContentFrame);
-        tandemLogoButton->setObjectName(QString::fromUtf8("tandemLogoButton"));
-        QSizePolicy sizePolicy2(QSizePolicy::Fixed, QSizePolicy::Fixed);
-        sizePolicy2.setHorizontalStretch(0);
-        sizePolicy2.setVerticalStretch(0);
-        sizePolicy2.setHeightForWidth(tandemLogoButton->sizePolicy().hasHeightForWidth());
-        tandemLogoButton->setSizePolicy(sizePolicy2);
-        tandemLogoButton->setMinimumSize(QSize(60, 35));
-        tandemLogoButton->setMaximumSize(QSize(60, 35));
-        tandemLogoButton->setStyleSheet(QString::fromUtf8("QPushButton {\n"
-"  background-color: #666666;\n"
-"  border: none;\n"
-"  border-radius: 3px;\n"
-"}\n"
-"QPushButton:pressed {\n"
-"  background-color: #555555;\n"
-"}"));
-
-        rightSideLayout->addWidget(tandemLogoButton);
-
-        rightSideSpacer = new QSpacerItem(20, 5, QSizePolicy::Minimum, QSizePolicy::Expanding);
-
-        rightSideLayout->addItem(rightSideSpacer);
 
 
         mainContentLayout->addLayout(rightSideLayout);
@@ -464,11 +454,6 @@ public:
         optionsButton->setIconSize(QSize(20, 20));
 
         actionButtonsLayout->addWidget(optionsButton);
-
-        powerButton = new QPushButton(bottomFrame);
-        powerButton->setObjectName(QString::fromUtf8("powerButton"));
-
-        actionButtonsLayout->addWidget(powerButton);
 
         bolusButton = new QPushButton(bottomFrame);
         bolusButton->setObjectName(QString::fromUtf8("bolusButton"));
@@ -523,12 +508,11 @@ public:
         glucoseValueLabel->setText(QCoreApplication::translate("MainWindow", "4.9", nullptr));
         glucoseUnitLabel->setText(QCoreApplication::translate("MainWindow", "mmol/L", nullptr));
         glucoseTrendLabel->setText(QCoreApplication::translate("MainWindow", "\342\236\241", nullptr));
+        powerButton->setText(QCoreApplication::translate("MainWindow", "Power", nullptr));
         hoursValueLabel->setText(QCoreApplication::translate("MainWindow", "3", nullptr));
         hoursTextLabel->setText(QCoreApplication::translate("MainWindow", "HRS", nullptr));
-        tandemLogoButton->setText(QString());
         iobLabel->setText(QCoreApplication::translate("MainWindow", "INSULIN ON BOARD    2.5 u | 3:45 hrs", nullptr));
         optionsButton->setText(QCoreApplication::translate("MainWindow", "OPTIONS", nullptr));
-        powerButton->setText(QCoreApplication::translate("MainWindow", "Power", nullptr));
         bolusButton->setText(QCoreApplication::translate("MainWindow", "BOLUS", nullptr));
     } // retranslateUi
 

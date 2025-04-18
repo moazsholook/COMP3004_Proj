@@ -406,7 +406,7 @@ main.o: ../main.cpp ../mainwindow.h \
 mainwindow.o: ../mainwindow.cpp ../mainwindow.h \
 		../Battery.h \
 		../Profile.h \
-		ui_mainwindow.h
+		../ui_mainwindow.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o mainwindow.o ../mainwindow.cpp
 
 Battery.o: ../Battery.cpp ../Battery.h

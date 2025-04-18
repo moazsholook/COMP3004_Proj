@@ -587,6 +587,31 @@ QPushButton:pressed {
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="powerButton">
+           <property name="minimumSize">
+            <size>
+             <width>100</width>
+             <height>100</height>
+            </size>
+           </property>
+           <property name="styleSheet">
+            <string notr="true">QPushButton {
+  background-color: #555555;
+  color: #FFFFFF;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+}
+QPushButton:pressed {
+  background-color: #444444;
+}</string>
+           </property>
+           <property name="text">
+            <string>Power</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QFrame" name="hoursFrame">
            <property name="minimumSize">
             <size>
@@ -647,54 +672,6 @@ QPushButton:pressed {
             </item>
            </layout>
           </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="tandemLogoButton">
-           <property name="sizePolicy">
-            <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-             <horstretch>0</horstretch>
-             <verstretch>0</verstretch>
-            </sizepolicy>
-           </property>
-           <property name="minimumSize">
-            <size>
-             <width>60</width>
-             <height>35</height>
-            </size>
-           </property>
-           <property name="maximumSize">
-            <size>
-             <width>60</width>
-             <height>35</height>
-            </size>
-           </property>
-           <property name="styleSheet">
-            <string notr="true">QPushButton {
-  background-color: #666666;
-  border: none;
-  border-radius: 3px;
-}
-QPushButton:pressed {
-  background-color: #555555;
-}</string>
-           </property>
-           <property name="text">
-            <string/>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="rightSideSpacer">
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>20</width>
-             <height>5</height>
-            </size>
-           </property>
-          </spacer>
          </item>
         </layout>
        </item>
@@ -802,13 +779,6 @@ QPushButton:pressed {
              <width>20</width>
              <height>20</height>
             </size>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QPushButton" name="powerButton">
-           <property name="text">
-            <string>Power</string>
            </property>
           </widget>
          </item>
