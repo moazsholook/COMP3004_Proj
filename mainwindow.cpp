@@ -159,7 +159,16 @@ void MainWindow::updateBatteryLevel()
         }
     } else {
         batteryTimer->stop();
-        QMessageBox::critical(this, "Battery Dead", "The pump has stopped due to dead battery!");
+        
+        // Disable all functionality except recharge
+        ui->optionsButton->setEnabled(false);
+        ui->bolusButton->setEnabled(false);
+        ui->refillButton->setEnabled(false);
+        ui->powerButton->setEnabled(false);
+        ui->rechargeButton->setEnabled(true);
+        
+        QMessageBox::critical(this, "Battery Dead", 
+            "The pump has stopped due to dead battery! Please recharge to continue.");
     }
 }
 
@@ -207,7 +216,20 @@ void MainWindow::onRechargeClicked()
     if (battery->getLevel() < 100) {
         battery->charge();
         updateBatteryDisplay();
-        batteryTimer->start(); // Restart the timer if it was stopped
+        
+        // If battery was at 0%, re-enable all functionality
+        if (battery->getLevel() == 100) {
+            ui->optionsButton->setEnabled(true);
+            ui->bolusButton->setEnabled(true);
+            ui->refillButton->setEnabled(true);
+            ui->powerButton->setEnabled(true);
+            
+            // Only restart the battery timer if the pump is powered on
+            if (poweredOn) {
+                batteryTimer->start(5000); // 5 seconds
+            }
+        }
+        
         QMessageBox::information(this, "Battery Charged", "Battery has been charged to 100%");
     } else {
         QMessageBox::information(this, "Battery Full", "Battery is already at 100%");
