@@ -48,6 +48,7 @@ public:
 
 signals:
     void bolusConfirmed(float immediateAmount, float extendedAmount, int duration);
+    void newGlucoseReading(float glucose);
 
 private slots:
     void onCalculateClicked();
@@ -80,6 +81,9 @@ class ProfilesDialog : public QDialog {
 public:
     explicit ProfilesDialog(QWidget *parent = nullptr);
 
+signals:
+    void profileSelected(const QString& profile);
+
 private slots:
     void onAddProfileClicked();
     void onProfileSelected(const QString& name);
@@ -92,22 +96,21 @@ private:
     QVBoxLayout *mainLayout;
     QVBoxLayout *profilesLayout;
     QPushButton *addProfileButton;
-    QList<QPushButton*> profileButtons;
-    QMap<QString, Profile*> profiles;
-
     QPushButton *viewButton;
     QPushButton *editButton;
     QPushButton *deleteButton;
     QPushButton *selectButton;
+    QList<QPushButton*> profileButtons;
     QString selectedProfile;
+    QMap<QString, Profile*> profiles;
 
     void setupUI();
     void refreshProfilesList();
-    void saveProfiles();
-    void loadProfiles();
+    void updateActionButtons();
     void showProfileDetails(const QString& name);
     void editProfile(const QString& name);
-    void updateActionButtons();
+    void saveProfiles();
+    void loadProfiles();
 };
 
 class MainWindow : public QMainWindow {
@@ -161,11 +164,13 @@ private:
     int totalDurationMs;
     int deliveryIntervalMs;
     int intervalsRemaining;
+    QDateTime lastGlucoseTime;
     EventLogger *eventLogger;
 
     void setupGlucoseChart();
     void loadProfiles();
     float calculateIntervalDelivery(float totalBolus, int totalDurationMs, int intervalMs);
+    void addGlucoseReading(float glucoseValue);
 };
 
 #endif

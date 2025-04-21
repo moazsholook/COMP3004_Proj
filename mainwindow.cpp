@@ -26,6 +26,9 @@ MainWindow::MainWindow(QWidget *parent)
     , totalDurationMs(0)
     , deliveryIntervalMs(20000)  // Default 20-second intervals
     , intervalsRemaining(0)
+    , lastGlucoseTime()
+    , poweredOn(false)  // Initialize to false
+    , isSleeping(false)  // Initialize to false
     , eventLogger(new EventLogger())
 {
     ui->setupUi(this);
@@ -36,9 +39,8 @@ MainWindow::MainWindow(QWidget *parent)
     // Setup UI elements
     setupGlucoseChart();
     
-    // Create battery timer
+    // Create battery timer (but don't start it yet)
     connect(batteryTimer, &QTimer::timeout, this, &MainWindow::updateBatteryLevel);
-    batteryTimer->start(300000); // 5 minutes
     
     // Create glucose timer
     connect(glucoseTimer, &QTimer::timeout, this, &MainWindow::updateGlucoseLevel);
@@ -46,7 +48,6 @@ MainWindow::MainWindow(QWidget *parent)
     
     // Setup extended bolus timer
     connect(extendedBolusTimer, &QTimer::timeout, this, &MainWindow::updateExtendedBolus);
-    
     
     // Add profile label to status bar
     statusBar()->addPermanentWidget(profileLabel);
@@ -90,14 +91,11 @@ MainWindow::MainWindow(QWidget *parent)
         }
     )");
     
-    // Initialize battery
+    // Initialize battery display
     updateBatteryDisplay();
     
-    // Set up battery drain timer (drain 1% every 5 seconds)
-    connect(batteryTimer, &QTimer::timeout, this, &MainWindow::updateBatteryLevel);
-    batteryTimer->start(5000); // 5 seconds
-    
-    updateInsulinDisplay();  // Initial display update
+    // Initialize insulin display
+    updateInsulinDisplay();
     
     // Connect the buttons
     connect(ui->optionsButton, &QPushButton::clicked, this, &MainWindow::onOptionsClicked);
@@ -105,14 +103,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->rechargeButton, &QPushButton::clicked, this, &MainWindow::onRechargeClicked);
     connect(ui->refillButton, &QPushButton::clicked, this, &MainWindow::onRefillClicked);
     connect(ui->powerButton, &QPushButton::clicked, this, &MainWindow::onPowerButtonClicked);
-    // Inside your MainWindow constructor (after ui->setupUi(this);)
-
     
     // Set up clock timer and initial time/date
     connect(clockTimer, &QTimer::timeout, this, &MainWindow::updateDateTime);
     clockTimer->start(1000); // Update every second
     updateDateTime(); // Initial update
-
+    
     // Connect time and date labels to UI elements
     ui->timeLabel->setText(timeLabel->text());
     ui->dateLabel->setText(dateLabel->text());
@@ -120,13 +116,13 @@ MainWindow::MainWindow(QWidget *parent)
         ui->timeLabel->setText(timeLabel->text());
         ui->dateLabel->setText(dateLabel->text());
     });
-
-    //this->centralWidget()->setEnabled(false);  // Lock UI
+    
+    // Initially disable buttons until power on
     ui->optionsButton->setEnabled(false);
-ui->bolusButton->setEnabled(false);
-ui->rechargeButton->setEnabled(false);
-ui->refillButton->setEnabled(false);
-    ui->powerButton->setEnabled(true); 
+    ui->bolusButton->setEnabled(false);
+    ui->rechargeButton->setEnabled(false);
+    ui->refillButton->setEnabled(false);
+    ui->powerButton->setEnabled(true);
 }
 
 MainWindow::~MainWindow()
@@ -134,7 +130,6 @@ MainWindow::~MainWindow()
     delete ui;
     delete battery;
 }
-
 
 void MainWindow::updateBatteryLevel()
 {
@@ -149,10 +144,18 @@ void MainWindow::updateBatteryLevel()
         }
     } else {
         batteryTimer->stop();
-        QMessageBox::critical(this, "Battery Dead", "The pump has stopped due to dead battery!");
+        
+        // Disable all functionality except recharge
+        ui->optionsButton->setEnabled(false);
+        ui->bolusButton->setEnabled(false);
+        ui->refillButton->setEnabled(false);
+        ui->powerButton->setEnabled(false);
+        ui->rechargeButton->setEnabled(true);
+        
+        QMessageBox::critical(this, "Battery Dead", 
+            "The pump has stopped due to dead battery! Please recharge to continue.");
     }
 }
-
 
 void MainWindow::updateBatteryDisplay()
 {
@@ -198,7 +201,20 @@ void MainWindow::onRechargeClicked()
     if (battery->getLevel() < 100) {
         battery->charge();
         updateBatteryDisplay();
-        batteryTimer->start(); // Restart the timer if it was stopped
+        
+        // If battery was at 0%, re-enable all functionality
+        if (battery->getLevel() == 100) {
+            ui->optionsButton->setEnabled(true);
+            ui->bolusButton->setEnabled(true);
+            ui->refillButton->setEnabled(true);
+            ui->powerButton->setEnabled(true);
+            
+            // Only restart the battery timer if the pump is powered on
+            if (poweredOn) {
+                batteryTimer->start(5000); // 5 seconds
+            }
+        }
+        
         QMessageBox::information(this, "Battery Charged", "Battery has been charged to 100%");
     } else {
         QMessageBox::information(this, "Battery Full", "Battery is already at 100%");
@@ -220,14 +236,6 @@ void MainWindow::setupGlucoseChart()
     // Create series for glucose data
     glucoseSeries = new QLineSeries();
     
-    // Add initial data points to show a sample trend
-    glucoseSeries->append(0, 5.5);
-    glucoseSeries->append(30, 6.2);
-    glucoseSeries->append(60, 7.0);
-    glucoseSeries->append(90, 6.8);
-    glucoseSeries->append(120, 6.5);
-    glucoseSeries->append(150, 5.8);
-    
     // Create the chart and add the series
     glucoseChart = new QChart();
     glucoseChart->addSeries(glucoseSeries);
@@ -238,7 +246,7 @@ void MainWindow::setupGlucoseChart()
     glucoseChart->setBackgroundBrush(QBrush(QColor("#333333")));
     glucoseChart->setTitleBrush(QBrush(Qt::white));
     
-    // Create and configure x-axis (time)
+    // Create axes
     QValueAxis *axisX = new QValueAxis;
     axisX->setRange(0, 180);
     axisX->setLabelFormat("%d");
@@ -246,7 +254,6 @@ void MainWindow::setupGlucoseChart()
     axisX->setLabelsColor(Qt::white);
     axisX->setTitleBrush(QBrush(Qt::white));
     
-    // Create and configure y-axis (glucose)
     QValueAxis *axisY = new QValueAxis;
     axisY->setRange(2, 22);  // Range from 2 to 22 mmol/L
     axisY->setLabelFormat("%.1f");
@@ -254,13 +261,12 @@ void MainWindow::setupGlucoseChart()
     axisY->setLabelsColor(Qt::white);
     axisY->setTitleBrush(QBrush(Qt::white));
     
-    // Add axes to chart and attach series
     glucoseChart->addAxis(axisX, Qt::AlignBottom);
     glucoseChart->addAxis(axisY, Qt::AlignLeft);
     glucoseSeries->attachAxis(axisX);
     glucoseSeries->attachAxis(axisY);
     
-    // Set up the chart view with antialiasing for smooth rendering
+    // Set up the chart view
     chartView = new QChartView(glucoseChart);
     chartView->setRenderHint(QPainter::Antialiasing);
     
@@ -290,18 +296,62 @@ void MainWindow::onOptionsClicked()
     dialog.exec();
 }
 
-
 void MainWindow::onBolusClicked()
 {
-    if (!poweredOn) {
-        QMessageBox::warning(this, "Pump Off", "Please turn on the pump first.");
+    if (insulinLevel <= 0) {
+        QMessageBox::critical(this, "No Insulin",
+            "Insulin cartridge is empty! Please refill before delivering bolus.");
         return;
     }
     
-    if (profiles.isEmpty()) {
-        QMessageBox::warning(this, "No Profiles", "No profiles available. Please create a profile first.");
+    // Always show profile selection dialog
+    ProfilesDialog dialog(this);
+    connect(&dialog, &ProfilesDialog::profileSelected, this, &MainWindow::setActiveProfile);
+    dialog.exec();
+    
+    // Check if a profile was selected
+    if (activeProfile.isEmpty() || !profiles.contains(activeProfile)) {
+        QMessageBox::warning(this, "No Profile Selected",
+            "Please select a profile before administering a bolus.");
         return;
     }
+    
+    ManualBolusDialog *bolusDialog = new ManualBolusDialog(this, profiles[activeProfile]);
+    
+    // Connect both signals
+    connect(bolusDialog, &ManualBolusDialog::bolusConfirmed, this, [this](float immediateAmount, float extendedAmount, int duration) {
+        float totalAmount = immediateAmount + extendedAmount;
+        if (totalAmount > insulinLevel) {
+            QMessageBox::critical(this, "Insufficient Insulin",
+                "Not enough insulin in cartridge for this bolus!");
+            return;
+        }
+        
+        // Deduct insulin and update display
+        insulinLevel -= totalAmount;
+        updateInsulinDisplay();
+        
+        // Update IOB label
+        QString currentIOB = ui->iobLabel->text();
+        float iobValue = currentIOB.split(" ")[3].toFloat();
+        float newIOB = iobValue + totalAmount;
+        ui->iobLabel->setText(QString("INSULIN ON BOARD    %1 u | 3:45 hrs").arg(newIOB));
+        
+        // If extended bolus is selected, start the timer
+        if (extendedAmount > 0) {
+            totalExtendedBolus = extendedAmount;
+            remainingExtendedBolus = extendedAmount;
+            totalDurationMs = duration * 3600000; // Convert hours to milliseconds
+            intervalsRemaining = totalDurationMs / deliveryIntervalMs;
+            extendedBolusTimer->start(deliveryIntervalMs);
+        }
+    });
+    
+    // Connect the new glucose reading signal
+    connect(bolusDialog, &ManualBolusDialog::newGlucoseReading, this, &MainWindow::addGlucoseReading);
+    
+    bolusDialog->exec();
+    delete bolusDialog;
 
     // Show profile selection dialog
     QDialog profileSelectDialog(this);
@@ -409,7 +459,6 @@ void MainWindow::onRefillClicked()
     }
 }
 
-
 void MainWindow::updateInsulinDisplay()
 {
     // Update progress bar
@@ -472,7 +521,6 @@ OptionsDialog::OptionsDialog(QWidget *parent) : QDialog(parent)
     connect(profilesButton, &QPushButton::clicked, this, &OptionsDialog::onProfilesClicked);
     connect(sleepButton, &QPushButton::clicked, this, &OptionsDialog::onSleepClicked);  // ✅ Connect it
 }
-
 
 void OptionsDialog::onStopInsulinClicked()
 {
@@ -557,11 +605,6 @@ ManualBolusDialog::ManualBolusDialog(QWidget *parent, Profile* profile)
 
 void ManualBolusDialog::onCalculateClicked()
 {
-    if (!activeProfile) {
-        QMessageBox::warning(this, "Error", "No profile selected!");
-        return;
-    }
-
     bool bgOk, carbsOk;
     float bg = bgInput->text().toFloat(&bgOk);
     float carbs = carbsInput->text().toFloat(&carbsOk);
@@ -571,26 +614,41 @@ void ManualBolusDialog::onCalculateClicked()
         return;
     }
 
-    float icr = activeProfile->getICR();
-    float cf = activeProfile->getCorrectionFactor();
-    float targetBG = activeProfile->getTargetBG();
+    // Emit the new glucose reading
+    emit newGlucoseReading(bg);
+
+    // Calculate bolus using profile settings
+    float carbBolus = carbs / activeProfile->getICR(); // Use profile's insulin-to-carb ratio
+    float correctionBolus = 0.0;
     
-    // Calculate total bolus using profile settings
-    float carbBolus = carbs / icr;
-    float correctionBolus = (bg > targetBG) ? (bg - targetBG) / cf : 0;
-    float totalBolus = carbBolus + correctionBolus;
-    
-    // If extended bolus is enabled, split the bolus according to percentage
-    if (extendedBolusCheck->isChecked()) {
-        float immediatePercent = immediatePercentage / 100.0f;
-        calculatedBolus = totalBolus * immediatePercent;
-        extendedBolus = totalBolus - calculatedBolus;
-    } else {
-        calculatedBolus = totalBolus;
-        extendedBolus = 0.0f;
+    // Calculate correction if BG is above target
+    if (bg > activeProfile->getTargetBG()) {
+        correctionBolus = (bg - activeProfile->getTargetBG()) / activeProfile->getCorrectionFactor();
     }
     
-    updateExtendedBolusDisplay();
+    calculatedBolus = carbBolus + correctionBolus;
+
+    // Update display with detailed calculation
+    bolusResultLabel->setText(QString("Calculated Bolus: %1 units\n"
+                                     "Carb Bolus: %2 units\n"
+                                     "Correction Bolus: %3 units")
+                             .arg(calculatedBolus, 0, 'f', 1)
+                             .arg(carbBolus, 0, 'f', 1)
+                             .arg(correctionBolus, 0, 'f', 1));
+    
+    // If extended bolus is enabled, calculate the split
+    if (extendedBolusCheck->isChecked()) {
+        float immediateAmount = calculatedBolus * (immediatePercentage / 100.0);
+        extendedBolus = calculatedBolus - immediateAmount;
+        calculatedBolus = immediateAmount;
+        
+        extendedBolusLabel->setText(QString("Extended Bolus: %1 units over %2 hours")
+                                  .arg(extendedBolus, 0, 'f', 1)
+                                  .arg(duration));
+        bolusPerHourLabel->setText(QString("Bolus Rate: %1 units/hour")
+                                 .arg(extendedBolus / duration, 0, 'f', 1));
+    }
+    
     confirmButton->setEnabled(true);
 }
 
@@ -661,8 +719,6 @@ void OptionsDialog::onSleepClicked()
     }
     close();
 }
-
-
 
 ProfilesDialog::ProfilesDialog(QWidget *parent) : QDialog(parent)
 {
@@ -791,44 +847,21 @@ void ProfilesDialog::refreshProfilesList()
     }
 }
 
-void ProfilesDialog::onProfileSelected(const QString& name)
+void ProfilesDialog::onProfileSelected(const QString& profile)
 {
-    // Uncheck all buttons
+    // Uncheck all other buttons
     for (auto button : profileButtons) {
-        button->setChecked(false);
+        button->setChecked(button->text() == profile);
     }
     
-    // Check the selected button
-    for (auto button : profileButtons) {
-        if (button->text() == name) {
-            button->setChecked(true);
-            break;
-        }
-    }
-    
-    selectedProfile = name;
+    selectedProfile = profile;
     updateActionButtons();
 }
 
-void ProfilesDialog::onSelectProfileClicked()
-{
-    if (profiles.isEmpty()) {
-        QMessageBox::warning(this, "No Profiles", "No profiles available. Please create a profile first.");
-        return;
-    }
-
-    bool ok;
-    QString profile = QInputDialog::getItem(this, "Select Profile",
-                                          "Choose a profile:", profiles.keys(), 0, false, &ok);
-    
-    if (ok && !profile.isEmpty()) {
-        // Get the MainWindow instance and call its setActiveProfile method
-        MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
-        if (mainWindow) {
-            mainWindow->setActiveProfile(profile);
-            QMessageBox::information(this, "Profile Selected", 
-                QString("Profile '%1' has been selected and is now active.").arg(profile));
-        }
+void ProfilesDialog::onSelectProfileClicked() {
+    if (!selectedProfile.isEmpty()) {
+        emit profileSelected(selectedProfile);
+        accept();
     }
 }
 
@@ -1100,7 +1133,6 @@ void MainWindow::setActiveProfile(const QString& profile)
     }
 }
 
-
 void MainWindow::updateDateTime()
 {
     QDateTime current = QDateTime::currentDateTime();
@@ -1215,14 +1247,23 @@ void MainWindow::onPowerButtonClicked() {
         ui->refillButton->setEnabled(true);
 
         QMessageBox::information(this, "Wake", "Pump has woken from sleep.");
+    } else {
+        // Power off the pump
+        poweredOn = false;
+        
+        // Stop battery drain timer
+        batteryTimer->stop();
+        
+        // Disable all buttons except power
+        ui->optionsButton->setEnabled(false);
+        ui->bolusButton->setEnabled(false);
+        ui->rechargeButton->setEnabled(false);
+        ui->refillButton->setEnabled(false);
+        
+        QMessageBox::information(this, "Power Off", "Pump has been powered off.");
+        ui->powerButton->setText("Power On");
     }
 }
-
-
-
-
-
-
 
 void MainWindow::enterSleepMode() {
     if (poweredOn && !isSleeping) {
@@ -1239,6 +1280,39 @@ void MainWindow::enterSleepMode() {
 
         QMessageBox::information(this, "Sleep Mode", "The pump is now asleep. Press Power to wake.");
     }
+}
+
+void MainWindow::addGlucoseReading(float glucoseValue)
+{
+    QDateTime currentTime = QDateTime::currentDateTime();
+    
+    // If this is the first reading, initialize lastGlucoseTime
+    if (lastGlucoseTime.isNull()) {
+        lastGlucoseTime = currentTime;
+        glucoseSeries->clear();  // Clear sample data
+        glucoseSeries->append(0, glucoseValue);
+    } else {
+        // Calculate minutes since last reading
+        int minutesSinceStart = lastGlucoseTime.secsTo(currentTime) / 60;
+        glucoseSeries->append(minutesSinceStart, glucoseValue);
+        
+        // Update X axis if needed
+        QValueAxis *axisX = qobject_cast<QValueAxis*>(glucoseChart->axes(Qt::Horizontal).first());
+        if (minutesSinceStart > axisX->max()) {
+            axisX->setRange(0, minutesSinceStart + 30);  // Add some padding
+        }
+    }
+    
+    // Update Y axis if needed
+    QValueAxis *axisY = qobject_cast<QValueAxis*>(glucoseChart->axes(Qt::Vertical).first());
+    if (glucoseValue > axisY->max()) {
+        axisY->setRange(2, glucoseValue + 2);  // Add some padding
+    } else if (glucoseValue < axisY->min()) {
+        axisY->setRange(glucoseValue - 2, 22);  // Add some padding
+    }
+    
+    // Update chart
+    glucoseChart->update();
 }
 
 void MainWindow::updateGlucoseLevel()
