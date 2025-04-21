@@ -27,6 +27,8 @@ MainWindow::MainWindow(QWidget *parent)
     , deliveryIntervalMs(20000)  // Default 20-second intervals
     , intervalsRemaining(0)
     , lastGlucoseTime()
+    , poweredOn(false)  // Initialize to false
+    , isSleeping(false)  // Initialize to false
 {
     ui->setupUi(this);
     
@@ -36,9 +38,8 @@ MainWindow::MainWindow(QWidget *parent)
     // Setup UI elements
     setupGlucoseChart();
     
-    // Create battery timer
+    // Create battery timer (but don't start it yet)
     connect(batteryTimer, &QTimer::timeout, this, &MainWindow::updateBatteryLevel);
-    batteryTimer->start(300000); // 5 minutes
     
     // Create glucose timer
     connect(glucoseTimer, &QTimer::timeout, this, [this]() {
@@ -97,14 +98,11 @@ MainWindow::MainWindow(QWidget *parent)
         }
     )");
     
-    // Initialize battery
+    // Initialize battery display
     updateBatteryDisplay();
     
-    // Set up battery drain timer (drain 1% every 5 seconds)
-    connect(batteryTimer, &QTimer::timeout, this, &MainWindow::updateBatteryLevel);
-    batteryTimer->start(5000); // 5 seconds
-    
-    updateInsulinDisplay();  // Initial display update
+    // Initialize insulin display
+    updateInsulinDisplay();
     
     // Connect the buttons
     connect(ui->optionsButton, &QPushButton::clicked, this, &MainWindow::onOptionsClicked);
@@ -1159,6 +1157,21 @@ void MainWindow::onPowerButtonClicked() {
         ui->refillButton->setEnabled(true);
 
         QMessageBox::information(this, "Wake", "Pump has woken from sleep.");
+    } else {
+        // Power off the pump
+        poweredOn = false;
+        
+        // Stop battery drain timer
+        batteryTimer->stop();
+        
+        // Disable all buttons except power
+        ui->optionsButton->setEnabled(false);
+        ui->bolusButton->setEnabled(false);
+        ui->rechargeButton->setEnabled(false);
+        ui->refillButton->setEnabled(false);
+        
+        QMessageBox::information(this, "Power Off", "Pump has been powered off.");
+        ui->powerButton->setText("Power On");
     }
 }
 
