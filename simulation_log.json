@@ -1,0 +1,154 @@
+{
+  "events": [
+    {
+      "timestamp": "00:00",
+      "cgm_reading": 145,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "00:05",
+      "cgm_reading": 148,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "00:10",
+      "cgm_reading": 152,
+      "insulin_delivery": {
+        "units": 0.15,
+        "type": "Control-IQ automated"
+      },
+      "events": ["CGM reading", "Insulin delivery"]
+    },
+    {
+      "timestamp": "00:15",
+      "cgm_reading": 149,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "00:20",
+      "cgm_reading": 145,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "00:25",
+      "cgm_reading": 142,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "00:30",
+      "cgm_reading": 138,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "00:35",
+      "cgm_reading": 132,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "00:40",
+      "cgm_reading": 128,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "00:45",
+      "cgm_reading": 122,
+      "insulin_delivery": {
+        "units": 0,
+        "type": "Control-IQ suspended"
+      },
+      "events": ["CGM reading", "Insulin delivery"]
+    },
+    {
+      "timestamp": "00:50",
+      "cgm_reading": 118,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "00:55",
+      "cgm_reading": 112,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "01:00",
+      "cgm_reading": 95,
+      "events": ["CGM reading", "Warning"],
+      "warning": "Low blood glucose"
+    },
+    {
+      "timestamp": "01:05",
+      "cgm_reading": 85,
+      "events": ["CGM reading", "Warning"],
+      "warning": "Critically low blood glucose"
+    },
+    {
+      "timestamp": "01:10",
+      "cgm_reading": 82,
+      "events": ["CGM reading", "Warning"],
+      "warning": "Critically low blood glucose"
+    },
+    {
+      "timestamp": "01:15",
+      "cgm_reading": 88,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "01:20",
+      "cgm_reading": 95,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "01:25",
+      "cgm_reading": 105,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "01:30",
+      "cgm_reading": 142,
+      "insulin_delivery": {
+        "units": 2.5,
+        "type": "Manual bolus"
+      },
+      "events": ["CGM reading", "Insulin delivery"]
+    },
+    {
+      "timestamp": "01:35",
+      "cgm_reading": 165,
+      "events": ["CGM reading", "Warning"],
+      "warning": "Low insulin"
+    },
+    {
+      "timestamp": "01:40",
+      "cgm_reading": 178,
+      "insulin_delivery": {
+        "units": 0.25,
+        "type": "Control-IQ automated"
+      },
+      "events": ["CGM reading", "Insulin delivery"]
+    },
+    {
+      "timestamp": "01:45",
+      "cgm_reading": 182,
+      "events": ["CGM reading", "Warning"],
+      "warning": "Low battery"
+    },
+    {
+      "timestamp": "01:50",
+      "cgm_reading": 175,
+      "insulin_delivery": {
+        "units": 0.20,
+        "type": "Control-IQ automated"
+      },
+      "events": ["CGM reading", "Insulin delivery"]
+    },
+    {
+      "timestamp": "01:55",
+      "cgm_reading": 168,
+      "events": ["CGM reading"]
+    },
+    {
+      "timestamp": "02:00",
+      "cgm_reading": 155,
+      "events": ["CGM reading"]
+    }
+  ]
+} 

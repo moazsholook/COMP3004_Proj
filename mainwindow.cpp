@@ -26,6 +26,7 @@ MainWindow::MainWindow(QWidget *parent)
     , totalDurationMs(0)
     , deliveryIntervalMs(20000)  // Default 20-second intervals
     , intervalsRemaining(0)
+    , eventLogger(new EventLogger())
 {
     ui->setupUi(this);
     
@@ -40,15 +41,7 @@ MainWindow::MainWindow(QWidget *parent)
     batteryTimer->start(300000); // 5 minutes
     
     // Create glucose timer
-    connect(glucoseTimer, &QTimer::timeout, this, [this]() {
-        // Add random glucose value between 4.0 and 10.0
-        static QTime timeAxis;
-        timeAxis = timeAxis.addSecs(300); // 5 minutes
-        double randomValue = QRandomGenerator::global()->generateDouble() * (10.0 - 4.0) + 4.0;
-        glucoseSeries->append(timeAxis.msecsSinceStartOfDay(), randomValue);
-        if (glucoseSeries->count() > 288) // 24 hours of data
-            glucoseSeries->remove(0);
-    });
+    connect(glucoseTimer, &QTimer::timeout, this, &MainWindow::updateGlucoseLevel);
     glucoseTimer->start(300000); // 5 minutes
     
     // Setup extended bolus timer
@@ -149,18 +142,10 @@ void MainWindow::updateBatteryLevel()
         battery->drain(1); // Drain 1% every 5 seconds
         updateBatteryDisplay();
         
-        // Show different warning messages based on battery level
-        if (battery->getLevel() == 50) {
-            QMessageBox::warning(this, "Battery Warning", 
-                "Battery is at 50%. Consider charging soon.");
-        }
-        else if (battery->getLevel() == 20) {
-            QMessageBox::warning(this, "Low Battery Warning", 
-                "Battery is getting low at 20%! Please charge the device soon.");
-        }
-        else if (battery->getLevel() <= 10) {
-            QMessageBox::critical(this, "Critical Battery Warning", 
-                "Battery is critically low! The pump will stop soon if not charged.");
+        // Log battery alerts at specific levels
+        int currentLevel = battery->getLevel();
+        if (currentLevel == 50 || currentLevel == 20 || currentLevel == 10) {
+            eventLogger->logBatteryAlert(currentLevel);
         }
     } else {
         batteryTimer->stop();
@@ -393,6 +378,8 @@ void MainWindow::onBolusClicked()
                         .arg(immediateAmount)
                         .arg(insulinLevel));
                 }
+                eventLogger->logImmediateBolus(immediateAmount);
+                eventLogger->logExtendedBolus(extendedAmount);
             });
             
             dialog.exec();
@@ -455,13 +442,11 @@ void MainWindow::updateInsulinDisplay()
         "    background-color: %1;"
         "}").arg(color));
     
-    // Show warnings at appropriate levels
+    // Log cartridge alerts
     if (insulinLevel <= 60 && insulinLevel > 30) {
-        QMessageBox::warning(this, "Low Insulin Warning",
-            "Insulin cartridge is getting low. Consider refilling soon.");
+        eventLogger->logCartridgeAlert(insulinLevel);
     } else if (insulinLevel <= 30) {
-        QMessageBox::critical(this, "Critical Insulin Warning",
-            "Insulin cartridge is critically low! Please refill immediately.");
+        eventLogger->logCartridgeAlert(insulinLevel);
     }
 }
 
@@ -1254,6 +1239,28 @@ void MainWindow::enterSleepMode() {
 
         QMessageBox::information(this, "Sleep Mode", "The pump is now asleep. Press Power to wake.");
     }
+}
+
+void MainWindow::updateGlucoseLevel()
+{
+    // Generate a random glucose value between 4.0 and 10.0 mmol/L
+    double glucoseValue = 4.0 + (QRandomGenerator::global()->generateDouble() * 6.0);
+    
+    // Update the EventLogger with the new BG level
+    eventLogger->updateBGLevel(glucoseValue);
+    
+    // Add the new data point to the series
+    static QTime timeAxis;
+    timeAxis = timeAxis.addSecs(300); // 5 minutes
+    glucoseSeries->append(timeAxis.msecsSinceStartOfDay(), glucoseValue);
+    
+    // Keep only the last 24 hours of data (288 points at 5-minute intervals)
+    if (glucoseSeries->count() > 288) {
+        glucoseSeries->remove(0);
+    }
+    
+    // Update the chart
+    glucoseChart->update();
 }
 
 

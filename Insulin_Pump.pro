@@ -12,12 +12,14 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     Battery.cpp \
-    Profile.cpp
+    Profile.cpp \
+    EventLogger.cpp
 
 HEADERS += \
     mainwindow.h \
     Battery.h \
-    Profile.h
+    Profile.h \
+    EventLogger.h
 
 FORMS += \
     mainwindow.ui

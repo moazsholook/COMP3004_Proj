@@ -18,6 +18,7 @@
 #include <QSpinBox>
 #include "Battery.h"
 #include "Profile.h"
+#include "EventLogger.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -118,24 +119,26 @@ public:
     void setActiveProfile(const QString& profile);
     void setInsulinDeliveryStopped(bool stopped) { insulinDeliveryStopped = stopped; }
     void enterSleepMode();
-
-public slots:
     void updateProfiles();
+    void updateGlucoseLevel();
 
 private slots:
     void onOptionsClicked();
     void onBolusClicked();
     void onRechargeClicked();
     void onRefillClicked();
-    void updateBatteryLevel();
-    void updateExtendedBolus();
     void onPowerButtonClicked();
+    void updateBatteryLevel();
+    void updateBatteryDisplay();
+    void updateInsulinDisplay();
+    void updateDateTime();
+    void updateExtendedBolus();
 
 private:
     Ui::MainWindow *ui;
     QMap<QString, Profile*> profiles;
     QString activeProfile;
-    float insulinLevel;
+    double insulinLevel;
     int batteryLevel;
     bool insulinDeliveryStopped;
     bool isSleeping;
@@ -153,16 +156,14 @@ private:
     QLabel *timeLabel;
     QLabel *dateLabel;
     QTimer *clockTimer;
-    float remainingExtendedBolus;
-    float totalExtendedBolus;
+    double remainingExtendedBolus;
+    double totalExtendedBolus;
     int totalDurationMs;
     int deliveryIntervalMs;
     int intervalsRemaining;
+    EventLogger *eventLogger;
 
     void setupGlucoseChart();
-    void updateBatteryDisplay();
-    void updateInsulinDisplay();
-    void updateDateTime();
     void loadProfiles();
     float calculateIntervalDelivery(float totalBolus, int totalDurationMs, int intervalMs);
 };
