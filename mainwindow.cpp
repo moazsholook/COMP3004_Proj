@@ -1278,6 +1278,8 @@ void MainWindow::updateGlucoseLevel()
     glucoseChart->update();
 }
 
+//ignore this comment
+
 
 
 
