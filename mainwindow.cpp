@@ -298,25 +298,17 @@ void MainWindow::onOptionsClicked()
 
 void MainWindow::onBolusClicked()
 {
-    if (insulinLevel <= 0) {
-        QMessageBox::critical(this, "No Insulin",
-            "Insulin cartridge is empty! Please refill before delivering bolus.");
-        return;
-    }
-    
-    // Always show profile selection dialog
-    ProfilesDialog dialog(this);
-    connect(&dialog, &ProfilesDialog::profileSelected, this, &MainWindow::setActiveProfile);
-    dialog.exec();
-    
-    // Check if a profile was selected
+    // Check if a profile is selected
     if (activeProfile.isEmpty() || !profiles.contains(activeProfile)) {
         QMessageBox::warning(this, "No Profile Selected",
-            "Please select a profile before administering a bolus.");
+            "Please select a profile from Options > Manage Profiles before administering a bolus.");
         return;
     }
+
+    // Get the selected profile
+    Profile* profile = profiles[activeProfile];
     
-    ManualBolusDialog *bolusDialog = new ManualBolusDialog(this, profiles[activeProfile]);
+    ManualBolusDialog *bolusDialog = new ManualBolusDialog(this, profile);
     
     // Connect both signals
     connect(bolusDialog, &ManualBolusDialog::bolusConfirmed, this, [this](float immediateAmount, float extendedAmount, int duration) {
@@ -337,6 +329,12 @@ void MainWindow::onBolusClicked()
         float newIOB = iobValue + totalAmount;
         ui->iobLabel->setText(QString("INSULIN ON BOARD    %1 u | 3:45 hrs").arg(newIOB));
         
+        // Log the bolus delivery
+        eventLogger->logImmediateBolus(immediateAmount);
+        if (extendedAmount > 0) {
+            eventLogger->logExtendedBolus(extendedAmount);
+        }
+        
         // If extended bolus is selected, start the timer
         if (extendedAmount > 0) {
             totalExtendedBolus = extendedAmount;
@@ -344,6 +342,26 @@ void MainWindow::onBolusClicked()
             totalDurationMs = duration * 3600000; // Convert hours to milliseconds
             intervalsRemaining = totalDurationMs / deliveryIntervalMs;
             extendedBolusTimer->start(deliveryIntervalMs);
+            
+            // Show extended bolus details
+            QMessageBox::information(this, "Extended Bolus Started", 
+                QString("Extended bolus delivery started:\n"
+                       "Total Amount: %1 units\n"
+                       "Duration: %2 hours\n"
+                       "Delivery Interval: %3 seconds\n"
+                       "Amount per Interval: %4 units\n"
+                       "Total Intervals: %5")
+                .arg(extendedAmount)
+                .arg(duration)
+                .arg(deliveryIntervalMs / 1000)
+                .arg(extendedAmount / (duration * 3600.0 / deliveryIntervalMs))
+                .arg(intervalsRemaining));
+        } else {
+            QMessageBox::information(this, "Bolus Delivered", 
+                QString("Immediate bolus of %1 units delivered successfully.\n"
+                       "Remaining insulin: %2 units")
+                .arg(immediateAmount)
+                .arg(insulinLevel));
         }
     });
     
@@ -352,91 +370,6 @@ void MainWindow::onBolusClicked()
     
     bolusDialog->exec();
     delete bolusDialog;
-
-    // Show profile selection dialog
-    QDialog profileSelectDialog(this);
-    profileSelectDialog.setWindowTitle("Select Profile for Bolus");
-    profileSelectDialog.setMinimumWidth(300);
-    
-    QVBoxLayout *layout = new QVBoxLayout(&profileSelectDialog);
-    QComboBox *profileCombo = new QComboBox(&profileSelectDialog);
-    QPushButton *okButton = new QPushButton("OK", &profileSelectDialog);
-    
-    // Load available profiles
-    for (auto it = profiles.begin(); it != profiles.end(); ++it) {
-        profileCombo->addItem(it.key());
-    }
-    
-    layout->addWidget(new QLabel("Select Profile:", &profileSelectDialog));
-    layout->addWidget(profileCombo);
-    layout->addWidget(okButton);
-    
-    connect(okButton, &QPushButton::clicked, &profileSelectDialog, &QDialog::accept);
-    
-    // Show profile selection dialog
-    if (profileSelectDialog.exec() == QDialog::Accepted) {
-        QString selectedProfileName = profileCombo->currentText();
-        Profile* selectedProfile = profiles[selectedProfileName];
-        
-        if (selectedProfile) {
-            ManualBolusDialog dialog(this, selectedProfile);
-            connect(&dialog, &ManualBolusDialog::bolusConfirmed, this, [this](float immediateAmount, float extendedAmount, int duration) {
-                float totalAmount = immediateAmount + extendedAmount;
-                
-                // Check if we have enough insulin
-                if (totalAmount > insulinLevel) {
-                    QMessageBox::warning(this, "Insufficient Insulin", 
-                        "Not enough insulin remaining for this bolus!");
-                    return;
-                }
-                
-                // Deliver immediate bolus
-                insulinLevel -= immediateAmount;
-                updateInsulinDisplay();
-                
-                // If there's an extended bolus, start the timer
-                if (extendedAmount > 0) {
-                    // Convert hours to milliseconds (1 hour = 60,000 ms)
-                    totalDurationMs = duration * 60000;
-                    remainingExtendedBolus = extendedAmount;
-                    totalExtendedBolus = extendedAmount;
-                    intervalsRemaining = totalDurationMs / deliveryIntervalMs;
-                    
-                    // Calculate and show the delivery details
-                    float intervalAmount = calculateIntervalDelivery(extendedAmount, totalDurationMs, deliveryIntervalMs);
-                    int intervals = totalDurationMs / deliveryIntervalMs;
-                    
-                    // Start the timer to deliver at fixed intervals
-                    extendedBolusTimer->start(deliveryIntervalMs);
-                    
-                    QMessageBox::information(this, "Extended Bolus Started", 
-                        QString("Extended bolus delivery started:\n"
-                               "Total Amount: %1 units\n"
-                               "Duration: %2 hours\n"
-                               "Delivery Interval: %3 seconds\n"
-                               "Amount per Interval: %4 units\n"
-                               "Total Intervals: %5")
-                        .arg(extendedAmount)
-                        .arg(duration)
-                        .arg(deliveryIntervalMs / 1000)
-                        .arg(intervalAmount)
-                        .arg(intervals));
-                } else {
-                    QMessageBox::information(this, "Bolus Delivered", 
-                        QString("Immediate bolus of %1 units delivered successfully.\n"
-                               "Remaining insulin: %2 units")
-                        .arg(immediateAmount)
-                        .arg(insulinLevel));
-                }
-                eventLogger->logImmediateBolus(immediateAmount);
-                eventLogger->logExtendedBolus(extendedAmount);
-            });
-            
-            dialog.exec();
-        } else {
-            QMessageBox::warning(this, "Error", "Selected profile not found!");
-        }
-    }
 }
 
 /**
@@ -535,7 +468,24 @@ void OptionsDialog::onStopInsulinClicked()
 void OptionsDialog::onProfilesClicked()
 {
     ProfilesDialog dialog(this);
+    connect(&dialog, &ProfilesDialog::profileSelected, this, [this](const QString& profile) {
+        MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
+        if (mainWindow) {
+            mainWindow->setActiveProfile(profile);
+            QMessageBox::information(this, "Profile Selected", 
+                QString("Profile '%1' has been selected and saved.").arg(profile));
+        }
+    });
     dialog.exec();
+}
+
+void OptionsDialog::onSleepClicked()
+{
+    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
+    if (mainWindow) {
+        mainWindow->enterSleepMode();  // ✅ Call the real sleep function
+    }
+    close();
 }
 
 // Manual Bolus Dialog Implementation
@@ -709,15 +659,6 @@ void ManualBolusDialog::updateExtendedBolusDisplay()
         extendedBolusLabel->setVisible(false);
         bolusPerHourLabel->setVisible(false);
     }
-}
-
-void OptionsDialog::onSleepClicked()
-{
-    MainWindow* mainWindow = qobject_cast<MainWindow*>(parent());
-    if (mainWindow) {
-        mainWindow->enterSleepMode();  // ✅ Call the real sleep function
-    }
-    close();
 }
 
 ProfilesDialog::ProfilesDialog(QWidget *parent) : QDialog(parent)
