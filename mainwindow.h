@@ -136,6 +136,8 @@ private slots:
     void updateInsulinDisplay();
     void updateDateTime();
     void updateExtendedBolus();
+    void onCgmModeToggled(bool enabled);
+    void onCgmSimulationTimeout();
 
 private:
     Ui::MainWindow *ui;
@@ -146,9 +148,13 @@ private:
     bool insulinDeliveryStopped;
     bool isSleeping;
     bool poweredOn;
+    bool cgmModeEnabled;
     QTimer *batteryTimer;
     QTimer *glucoseTimer;
     QTimer *extendedBolusTimer;
+    QTimer *cgmSimulationTimer;  // Timer for CGM simulation
+    QList<float> cgmSimulationValues;  // List of simulated BG values
+    int currentCgmValueIndex;  // Current index in the simulation list
     QChart *glucoseChart;
     QLineSeries *glucoseSeries;
     QValueAxis *glucoseAxisX;

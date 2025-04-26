@@ -176,6 +176,12 @@ void EventLogger::updateBGLevel(double bgLevel)
     qDebug() << "EventLogger: BG level updated to" << bgLevel;
 }
 
+void EventLogger::logEvent(const QString &event)
+{
+    qDebug() << event;
+    emit newEventLogged(event, QDateTime::currentDateTime());
+}
+
 void EventLogger::onTimerTick()
 {
     qDebug() << "EventLogger: Timer tick - Current BG level:" << lastBGLevel;

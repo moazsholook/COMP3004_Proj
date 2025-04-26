@@ -12,6 +12,7 @@ MainWindow::MainWindow(QWidget *parent)
     , batteryTimer(new QTimer(this))
     , glucoseTimer(new QTimer(this))
     , extendedBolusTimer(new QTimer(this))
+    , cgmSimulationTimer(new QTimer(this))
     , glucoseChart(new QChart())
     , glucoseSeries(new QLineSeries())
     , glucoseAxisX(new QValueAxis())
@@ -29,9 +30,26 @@ MainWindow::MainWindow(QWidget *parent)
     , lastGlucoseTime()
     , poweredOn(false)  // Initialize to false
     , isSleeping(false)  // Initialize to false
+    , cgmModeEnabled(false)  // Initialize CGM mode to false
+    , currentCgmValueIndex(0)
     , eventLogger(new EventLogger())
 {
+    // Initialize CGM simulation values
+    cgmSimulationValues = {110, 115, 120, 130, 125, 118, 105, 100};
+    
+    // Set up CGM simulation timer
+    connect(cgmSimulationTimer, &QTimer::timeout, this, &MainWindow::onCgmSimulationTimeout);
+    
     ui->setupUi(this);
+    
+    // Create CGM mode toggle switch
+    QCheckBox *cgmModeToggle = new QCheckBox("Enable CGM Mode", this);
+    cgmModeToggle->setStyleSheet("color: white; font-size: 12px;");
+    cgmModeToggle->setChecked(cgmModeEnabled);
+    connect(cgmModeToggle, &QCheckBox::toggled, this, &MainWindow::onCgmModeToggled);
+    
+    // Add the toggle to the glucose frame layout
+    ui->glucoseFrameLayout->addWidget(cgmModeToggle);
     
     // Load profiles from JSON file
     loadProfiles();
@@ -246,14 +264,16 @@ void MainWindow::setupGlucoseChart()
     glucoseChart->setBackgroundBrush(QBrush(QColor("#333333")));
     glucoseChart->setTitleBrush(QBrush(Qt::white));
     
-    // Create axes
+    // Set up X axis (time) for 5-minute demo
     QValueAxis *axisX = new QValueAxis;
-    axisX->setRange(0, 180);
+    axisX->setRange(0, 5);  // 5 minutes range
     axisX->setLabelFormat("%d");
     axisX->setTitleText("Time (minutes)");
     axisX->setLabelsColor(Qt::white);
     axisX->setTitleBrush(QBrush(Qt::white));
+    axisX->setTickCount(6);  // Show ticks at 0,1,2,3,4,5 minutes
     
+    // Set up Y axis (glucose)
     QValueAxis *axisY = new QValueAxis;
     axisY->setRange(2, 22);  // Range from 2 to 22 mmol/L
     axisY->setLabelFormat("%.1f");
@@ -1227,10 +1247,9 @@ void MainWindow::addGlucoseReading(float glucoseValue)
 {
     QDateTime currentTime = QDateTime::currentDateTime();
     
-    // If this is the first reading, initialize lastGlucoseTime
-    if (lastGlucoseTime.isNull()) {
+    if (glucoseSeries->count() == 0) {
         lastGlucoseTime = currentTime;
-        glucoseSeries->clear();  // Clear sample data
+        glucoseSeries->clear();
         glucoseSeries->append(0, glucoseValue);
     } else {
         // Calculate minutes since last reading
@@ -1240,7 +1259,7 @@ void MainWindow::addGlucoseReading(float glucoseValue)
         // Update X axis if needed
         QValueAxis *axisX = qobject_cast<QValueAxis*>(glucoseChart->axes(Qt::Horizontal).first());
         if (minutesSinceStart > axisX->max()) {
-            axisX->setRange(0, minutesSinceStart + 30);  // Add some padding
+            axisX->setRange(0, minutesSinceStart + 1);  // Add some padding
         }
     }
     
@@ -1254,6 +1273,13 @@ void MainWindow::addGlucoseReading(float glucoseValue)
     
     // Update chart
     glucoseChart->update();
+    
+    // Log the manual BG reading if not in CGM mode
+    if (!cgmModeEnabled) {
+        eventLogger->logEvent(QString("[MANUAL BG READING] BG: %1 mmol/L at %2")
+                            .arg(glucoseValue, 0, 'f', 1)
+                            .arg(QTime::currentTime().toString("HH:mm:ss")));
+    }
 }
 
 void MainWindow::updateGlucoseLevel()
@@ -1278,7 +1304,83 @@ void MainWindow::updateGlucoseLevel()
     glucoseChart->update();
 }
 
-//ignore this comment
+void MainWindow::onCgmModeToggled(bool enabled)
+{
+    cgmModeEnabled = enabled;
+    
+    // Disable bolus button when CGM mode is enabled
+    ui->bolusButton->setEnabled(!enabled);
+    
+    if (enabled) {
+        // Start CGM simulation
+        cgmSimulationTimer->start(30000);  // 1 minute intervals
+        QMessageBox::information(this, "CGM Mode Enabled", 
+            "CGM mode is now active. Simulated readings will be added every minute.");
+    } else {
+        // Stop CGM simulation
+        cgmSimulationTimer->stop();
+        QMessageBox::information(this, "CGM Mode Disabled", 
+            "CGM mode has been disabled. Manual bolus calculations are now available.");
+    }
+}
+
+void MainWindow::onCgmSimulationTimeout()
+{
+    if (currentCgmValueIndex >= cgmSimulationValues.size()) {
+        currentCgmValueIndex = 0;  // Reset to start of list
+    }
+    
+    float bgValue = cgmSimulationValues[currentCgmValueIndex++];
+    addGlucoseReading(bgValue);
+    
+    // Update the glucose display
+    ui->glucoseValueLabel->setText(QString::number(bgValue, 'f', 1));
+    
+    // Log the CGM reading
+    eventLogger->logEvent(QString("[CGM READING] BG: %1 mmol/L at %2")
+                         .arg(bgValue, 0, 'f', 1)
+                         .arg(QTime::currentTime().toString("HH:mm:ss")));
+    
+    // Check if automatic correction bolus is needed
+    if (bgValue >= 130.0 && !insulinDeliveryStopped) {
+        // Get the active profile for correction factor
+        if (!activeProfile.isEmpty() && profiles.contains(activeProfile)) {
+            Profile* profile = profiles[activeProfile];
+            float targetBG = profile->getTargetBG();
+            float correctionFactor = profile->getCorrectionFactor();
+            
+            // Calculate correction bolus
+            float correctionBolus = (bgValue - targetBG) / correctionFactor;
+            
+            // Safety check: don't deliver more than 5 units at once
+            if (correctionBolus > 5.0) {
+                correctionBolus = 5.0;
+            }
+            
+            // Check if we have enough insulin
+            if (insulinLevel >= correctionBolus) {
+                // Deliver the correction bolus
+                insulinLevel -= correctionBolus;
+                updateInsulinDisplay();
+                
+                // Log the automatic correction
+                eventLogger->logEvent(QString("Automatic correction bolus: %1 units (BG: %2)")
+                                    .arg(correctionBolus, 0, 'f', 1)
+                                    .arg(bgValue, 0, 'f', 1));
+                
+                // Show notification to user
+                QMessageBox::information(this, "Automatic Correction", 
+                    QString("Delivered %1 units correction bolus for high BG (%2)")
+                    .arg(correctionBolus, 0, 'f', 1)
+                    .arg(bgValue, 0, 'f', 1));
+            } else {
+                QMessageBox::warning(this, "Low Insulin", 
+                    "Not enough insulin available for automatic correction.");
+            }
+        }
+    }
+}
+
 
 
 

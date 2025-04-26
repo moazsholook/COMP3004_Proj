@@ -28,6 +28,7 @@ public:
     void logBatteryWarning(int level);
     void logLowInsulinWarning(int remainingUnits);
     void updateBGLevel(double bgLevel);
+    void logEvent(const QString &event);
 
 signals:
     void newEventLogged(const QString &event, const QDateTime &timestamp);
