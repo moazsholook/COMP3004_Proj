@@ -1342,7 +1342,7 @@ void MainWindow::onCgmSimulationTimeout()
                          .arg(QTime::currentTime().toString("HH:mm:ss")));
     
     // Check if automatic correction bolus is needed
-    if (bgValue >= 130.0 && !insulinDeliveryStopped) {
+    if (bgValue >= 120.0) {
         // Get the active profile for correction factor
         if (!activeProfile.isEmpty() && profiles.contains(activeProfile)) {
             Profile* profile = profiles[activeProfile];
